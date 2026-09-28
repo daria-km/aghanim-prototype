@@ -279,7 +279,11 @@ button { font-family: inherit; }
 /* generic rail for whatever .app__main holds — see app.js boot, which injects .app-rail next to it on every page */
 .app-rail { display: none; }
 .app__body:has(.app__chat[data-nw="solo"]) .app__main { display: none; }
-.app__body:has(.app__chat[data-nw="solo"]) .app-rail { display: flex; flex: 0 0 0; min-width: 0; margin-right: calc(var(--split-gap) * -1); overflow: hidden; background: var(--color-fg-secondary-alt); }   /* the canvas's own colour (the build's ground), nothing in it */
+.app__body:has(.app__chat[data-nw="solo"]) .app-rail { display: flex; flex: 0 0 0; min-width: 0; overflow: hidden; background: var(--color-fg-secondary-alt); }   /* the canvas's own colour (the build's ground), nothing in it */
+/* the rail sits inside .app__pane (app.js wraps it there), so the gap it needs to cancel is .app__pane's own —
+   a margin on .app-rail itself is clipped by the pane and never reaches .app__body's gap (bug found 29.09:
+   left edge of the solo screen came in at double width, right edge flush with the window). */
+.app__body:has(.app__chat[data-nw="solo"]) .app__pane { margin-right: calc(var(--split-gap) * -1); }
 .app-rail svg { display: none; }
 .nw-chat__rail { display: none; width: 100%; border: 0; background: none; cursor: pointer; flex-direction: column; align-items: center; gap: 8px; padding: 20px 0; }
 .nw-chat__rail .ai-ico { width: 20px; height: 20px; }
@@ -586,7 +590,19 @@ button { font-family: inherit; }
 .ob-show__shield { position: absolute; inset: 0; }   /* the wheel scrolls the window, the hub itself isn't clicked */
 .ob-show__foot { display: flex; justify-content: center; }
 .ob-show__foot .ob-go { min-width: 280px; box-shadow: var(--shadow-xl); }
-.ob-show.anim-in .ob-show__win { animation: mo-modal-in var(--dur-3) var(--ease-out); }
+/* the hub comes up out of the fog and its edge shines (Daria, 29.09: a dark hub on the dark fog was lost): it rises from below,
+   then the border of a selected block in Hub (.sel-ring — Newton's light blue, glowing, a glint of his colours running
+   round) lights up around the window. The same effect as the selection, nothing new. */
+.ob-show.anim-in .ob-show__win { animation: ob-show-rise .7s var(--ease-out); }
+@keyframes ob-show-rise { from { opacity: 0; translate: 0 48px; scale: .94; } }
+.ob-show__win::after { content: ""; position: absolute; inset: -6px; z-index: 2; pointer-events: none; border-radius: calc(var(--radius-2xl1) + 6px); padding: 3px;
+  background: radial-gradient(transparent, transparent, var(--color-fg-pink-primary), var(--color-text-inverse), var(--color-fg-brand-primary-hover), transparent, transparent) 0 0 / 250% 250%,
+    linear-gradient(var(--color-fg-brand-primary-hover), var(--color-fg-brand-primary-hover));
+  -webkit-mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  filter: drop-shadow(0 0 8px var(--color-fg-brand-primary-hover)) drop-shadow(0 0 16px var(--color-fg-pink-primary));
+  animation: ob-ring-in .6s var(--ease-out) .45s both, ag-ai-shine 4.5s linear infinite; }
+@keyframes ob-ring-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ob-show.anim-in .ob-show__win, .ob-show__win::after { animation: none; } }
 .ob-show.anim-out { animation: mo-fade-out var(--dur-2) var(--ease-in) forwards; pointer-events: none; }
 
 /* one verification group = one card in the conversation; a finished one stays as a card and turns green */

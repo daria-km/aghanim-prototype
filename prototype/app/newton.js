@@ -231,29 +231,40 @@ AG.newton = (() => {
     if (e && e.scheduled) now.push('Halloween event is scheduled for **Oct 25**');   // verification doesn't gate the event in the prototype (Daria, 28.09)
     else if (e && e.built) now.push('Halloween event is built — **one click** to schedule it');
     if (v.status === 'review') now.push('Verification is **in review**');   // waiting, not a thing to do (Daria, 28.09)
-    /* no "Still to do" and no list of what to do next (UX answers 28.09): the page's cards say it; the chat gives what happened,
-       what Newton did, and one line with the button to hand it all over */
+    /* no "Still to do" list (UX answers 28.09): the page's cards say it; the chat gives what happened, what Newton did,
+       and the button to hand it over. Split in two lines, two buttons, one message (Daria, 28.09: one "Decide everything
+       for me" was quietly doing only 2 of the 4 cards on screen, and lumped launch in with sales — different in kind):
+       Launch — what stands between the hub and going live — and everything else (Fix/Sales/Players/Event) are two lines. Two messages here would work too, but the CSS that greys out a stale "Decide"
+       once a newer Newton message follows (chat.css) would grey out the first of the two the instant the second lands —
+       one message sidesteps that. Each line covers every matching card actually on the page, not a fixed count. */
     const li = (a) => a.map((x) => `- ${x}`).join('\n');
     const happened = { sid: `hi:home:${st}:a:${Date.now()}`, summary: true,
       text: `**What happened**\n${li(now)}`,
       widget: { type: 'log', flow: 'log', key: st, title: 'What I did', rows: didRows(st) } };
-    const recs = ids, onPage = cards(opts.route()).map((x) => x.id), here = ids.every((id) => onPage.includes(id));
-    const N2 = ['', 'One thing', 'Two things', 'Three things'][ids.length] || `${ids.length} things`;
-    const next = { sid: `hi:home:${st}:b:${Date.now()}`, summary: true,
-      text: ids.length ? `${N2} ${here ? 'on this page' : 'need you'} — I can do ${ids.length > 1 ? 'them' : 'it'} for you.` : '',   // unfinished work is on top, in its strips — not repeated here (Daria, 27.09)   // no "Want me to take care of it?" — the button says it (Daria, 27.09)
-      actions: forMe(ids) };
-    return recs.length ? [happened, next] : [happened];   // nothing to suggest: no empty heading
+    const goAct = (label, list) => ({ label, act: list.length > 1 ? `do-all:${list.join(',')}` : `do:${list[0]}`, kind: 'ai' });
+    const launchIds = ids.filter((id) => typeOf(id) === 'Launch'), otherIds = ids.filter((id) => typeOf(id) !== 'Launch');
+    /* say what, not how many (Daria, 29.09: "Get me live" read shallow — about what?): each line names the things themselves.
+       "Decide everything for me" means everything — launch included; with both kinds on the table, a second, narrower
+       button takes only the launch steps */
+    const words = (list) => { const a = list.map((id) => askOf(id).replace(/\bmy\b/g, 'your')); return a.length < 2 ? a[0] : `${a.slice(0, -1).join(', ')} and ${a[a.length - 1]}`; };
+    const lines = [], actions = [];
+    if (launchIds.length) lines.push(`**To go live:** ${words(launchIds)}.`);
+    if (otherIds.length) lines.push(`**To bring in more players and sales:** ${words(otherIds)}.`);
+    if (launchIds.length && otherIds.length) actions.push(goAct('Do the launch steps for me', launchIds));
+    if (ids.length) actions.push(goAct('Decide everything for me', [...launchIds, ...otherIds]));
+    const next = actions.length ? { sid: `hi:home:${st}:b:${Date.now()}`, summary: true, text: lines.join('\n\n'), actions } : null;
+    return [happened, next].filter(Boolean);   // nothing to suggest: no empty heading
   }
   function greeting() {
     const r = opts.route();
     let ids = (r === 'analytics-transactions' && AG.homeState() === 3 ? [] : cards(r).map((c) => c.id)).filter((id) => NOTE[id] && !(id === 'l-verify' && inReview()));   // Transactions with purchases shows no cards
     const going = new Set(allOpen().map((t) => t.taskId));   // under way already (the event you've started): not offered again
-    ids = ids.filter((id) => !going.has(ALIAS[id] || id)).slice(0, 2);
+    ids = ids.filter((id) => !going.has(ALIAS[id] || id));   // no cap (Daria, 28.09): every card on the page gets covered, not just the first two
     /* the summary is one for the whole game, on every Dashboard page (Daria, 28.09: the chat doesn't repeat the page's cards —
        it gives the digest and "Decide everything for me"); what to do next — this page's first, then Home's */
     if (page === 'dashboard') {
       const home = r === 'home' ? [] : cards('home').map((c) => c.id).filter((id) => NOTE[id] && !(id === 'l-verify' && inReview()) && !going.has(ALIAS[id] || id));
-      return summary([...new Set([...ids, ...home])].slice(0, 2));
+      return summary([...new Set([...ids, ...home])]);
     }
     if (!ids.length) return Object.assign({ sid: `hi:${r}:quiet:${AG.homeState()}` }, (QUIET[r] || quietDefault)());
     return { sid: `hi:${r}:${ids.join(',')}`, text: ids.map((id) => NOTE[id][0]).join('\n\n'),
@@ -299,10 +310,10 @@ AG.newton = (() => {
     const steps = p.steps.map((s, k) => (k < p.i ? s : k === p.i ? `${s} — stopped, you took over` : `${s} — left for you`));
     chat.widget(p.plan.id, { kicker: 'Stopped — you started something else', steps, at: p.i, stopped: true });
   }
-  function doAll(ids) {
+  function doAll(ids, label) {
     ids = ids.filter(Boolean);
     const names = ids.map(askOf), steps = names.map(capital), acts = [];
-    chat.push({ from: 'you', text: `Decide everything for me: ${names.join(', ')}` });
+    chat.push({ from: 'you', text: `${label || 'Decide everything for me'}: ${names.join(', ')}` });   // echoes the button actually pressed — "Get me live" reads differently from "Decide everything for me" (Daria, 28.09)
     chat.say({ tools: false, widget: { type: 'working', ai: true, kicker: 'Deciding for you', title: ids.length > 1 ? `${ids.length} things, one after another` : steps[0], steps: steps.slice(), at: 0, pct: 0 } }, 600).then((plan) => {
       const busy = () => chat.messages.some((m) => m.id !== plan.id && m.widget && !m.widget.done && ['working', 'options', 'fields'].includes(m.widget.type));
       const mine = new Set();
@@ -341,6 +352,7 @@ AG.newton = (() => {
       chat.messages.forEach((m) => { if (m.archived && m.from === 'newton' && !mine.has(m.id)) mine.add(m.id); });
       chat.opts.muffle = false;
       chat.newton({ tools: false, text: `Done — ${steps.length === 2 ? 'both handled' : steps.length > 2 ? `all ${steps.length} handled` : 'handled'}.${drafts}`, actions: acts });
+      syncSummary();   // the summary above the plan no longer offers what the plan just did
     }, 900);
   }
   let greetT = 0;
@@ -361,6 +373,22 @@ AG.newton = (() => {
       }, 900);
     };
     next(0);
+  }
+  /* the chat and the page never disagree (Daria, 29.09: "they must never lag behind each other or argue"): whatever got done —
+     here, on a card, in another tab — Newton's summary on screen is rewritten in place to what's true now: done things
+     leave its lines, "What happened" picks up the news; with nothing left to offer, the offer goes */
+  function syncSummary() {
+    if (!chat || page !== 'dashboard' || planning || showing !== ctxKey()) return;
+    const live = chat.messages.filter((m) => m.summary && !m.archived && !m.stream);
+    const a = live.filter((m) => /:a:/.test(m.sid)).pop(), b = live.filter((m) => /:b:/.test(m.sid)).pop();
+    if (!a && !b) return;
+    const g = greeting(); if (!Array.isArray(g)) return;
+    const [happened, next] = [g[0], g[1] || null];
+    if (a && happened && a.text !== happened.text) chat.update(a.id, { text: happened.text });
+    if (!b) return;
+    if (!next) { chat.remove(b.id); return; }
+    const same = b.text === next.text && JSON.stringify(b.actions) === JSON.stringify(next.actions);
+    if (!same) chat.update(b.id, { text: next.text, actions: next.actions });
   }
   /* "… for me": Newton opens the task and takes the recommended option himself */
   function doForMe(id) {
@@ -1062,8 +1090,8 @@ AG.newton = (() => {
     /* signals */
     if (ctx.kind === 'msg') {
       if (act.startsWith('open:')) { const [k, id] = act.slice(5).split('|'); return onPin(chat, { go: k, id: Number(id) }); }
-      if (act.startsWith('do-all:')) { if (msg && msg.id) chat.update(msg.id, { actions: (msg.actions || []).filter((x) => x.act !== act) }); return doAll(act.slice(7).split(',')); }
-      if (act.startsWith('do:')) { if (msg && msg.id) chat.update(msg.id, { actions: (msg.actions || []).filter((x) => x.act !== act) }); return doAll([act.slice(3)]); }   // one job goes the same way as several   // the other offer stays
+      if (act.startsWith('do-all:')) { const a = msg && (msg.actions || []).find((x) => x.act === act); if (msg && msg.id) chat.update(msg.id, { actions: (msg.actions || []).filter((x) => x.act !== act) }); return doAll(act.slice(7).split(','), a && a.label); }
+      if (act.startsWith('do:')) { const a = msg && (msg.actions || []).find((x) => x.act === act); if (msg && msg.id) chat.update(msg.id, { actions: (msg.actions || []).filter((x) => x.act !== act) }); return doAll([act.slice(3)], a && a.label); }   // one job goes the same way as several   // the other offer stays
       if (act === 'later') return chat.update(msg.id, { actions: [], note: 'OK, I’ll bring it up next week.' });
       if (act === 'dismiss') return chat.update(msg.id, { actions: [], note: 'Hidden. I’ll remind you in a week.' });
       if (act === 'extend') { chat.update(msg.id, { actions: [], note: 'Extended to Oct 4.' }); return toast('Summer Sale extended by 1 week'); }
@@ -1254,11 +1282,13 @@ AG.newton = (() => {
     store.carry = null;
     return key;
   }
-  /* the empty chat's one line changes on every visit, so it doesn't go stale (Daria, 28.09) */
+  /* the empty chat's one line changes on every visit, so it doesn't go stale (Daria, 28.09).
+     Not a question back (Daria, 29.09: "How can I help?" says nothing — Newton always offers something to do):
+     each line names a thing that works on this page right now */
   const HERO = {
-    hub: ['How can I help?', 'What should we change on this page?', 'Want a new look? Just say it.', 'What would make this page sell more?', 'Tell me what to change.'],
-    dashboard: ['How can I help?', 'What are we making today?', 'What should we sell next?', 'Where do we start?', 'Ready when you are.'] };
-  let heroN = Math.floor(Math.random() * 5), heroLine = 'How can I help?';
+    hub: ['Click any block on the page, then tell me what to change.', 'Want a new look? Open Styles below, or roll the dice.', 'Roll the dice below — I’ll try another look for this page.'],
+    dashboard: ['Ask me anything about your game — sales, players, what to sell next.', 'Tell me what to make — an offer, a bundle, an event — and I’ll draft it.'] };
+  let heroN = Math.floor(Math.random() * 5), heroLine = (HERO[page] || HERO.dashboard)[0];
   const nextHero = () => { const l = HERO[page] || HERO.dashboard; heroN = (heroN + 1) % l.length; heroLine = l[heroN]; };
   function enter(force) {
     if (!chat) return;
@@ -1343,9 +1373,10 @@ AG.newton = (() => {
         const e = ev(), isEv = t.taskId === 'halloween';
         const steps = isEv ? { done: evDone(e), of: 5 } : t.taskId === 'verify' ? { done: Math.min(AG.state.verify.step, AG.VERIFY_TOTAL), of: AG.VERIFY_TOTAL }
           : t.taskId === 'connect' ? { done: Math.min(AG.state.connect, AG.CONNECT_TOTAL), of: AG.CONNECT_TOTAL } : null;
-        const far = isEv && e.built ? 'One click to schedule' : steps ? `${steps.done} of ${steps.of} done` : '';
         const where = k === showing ? '' : whereIs(k);
-        out.push(Object.assign({ text: t.text, note: [far, where].filter(Boolean).join(' · '), go: k, id: t.id, ev: isEv }, steps || {}));
+        /* the card of the page (Daria, 29.09): its kind, the task, one line — what's left or where it waits; the steps go to the ring */
+        const sub = isEv && e.built ? 'One click to schedule' : where ? `Waiting on ${where}` : 'Pick up where you left off';
+        out.push(Object.assign({ text: t.text, kind: typeOf(t.taskId), sub, go: k, id: t.id, ev: isEv }, steps || {}));
       });
     });
     return out.sort((a, b) => (b.ev - a.ev) || (b.id - a.id));   // the event first, then the newest
@@ -1442,6 +1473,7 @@ AG.newton = (() => {
   function mount(o) {
     opts = Object.assign({ route: () => '', hubPage: () => 'home', kind: () => 'list', onPage: () => {}, onLook: () => {} }, o);
     page = o.page;
+    nextHero();   // the empty chat's line is this page's own from the first draw
     store = conversation();
     showing = pickThread();
     const all = Object.values(store.threads).flatMap((t) => t.messages || []);
@@ -1478,7 +1510,7 @@ AG.newton = (() => {
       /* the launch steps and the event card follow what just happened (verified, connected, published) */
       approvedNews();
       syncWork(); sync(); syncSugg(); syncAlerts();   // a draft landed on an empty page: from nearly all the screen back to half; it isn't blank any more
-      syncPack();
+      syncPack(); syncSummary();
     });
     window.addEventListener('hashchange', () => { enter(); chat.messages.filter((m) => (m.actions || []).some((a) => a.at) || (m.widget && m.widget.doneLink)).forEach((m) => chat.update(m.id, {})); });   // the ways to sections follow where you are
     /* every mechanic answers every other one (Daria, 26.09):

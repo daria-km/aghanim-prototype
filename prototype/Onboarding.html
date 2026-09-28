@@ -11,16 +11,16 @@
 <meta property="og:image:height" content="756">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Newton, the AI in the dashboard: onboarding, Home, a Halloween event built in the chat, the hub builder. Best on a computer, 1280px and wider.">
-<script>(function(){try{var v='78fca03',k="aghanim-proto-build",had=localStorage.getItem("aghanim-proto-v1")||localStorage.getItem("aghanim-proto-chat");if(localStorage.getItem(k)!==v){localStorage.removeItem("aghanim-proto-v1");localStorage.removeItem("aghanim-proto-chat");localStorage.setItem(k,v);if(had&&!/Onboarding\.html/.test(location.pathname))location.replace("Onboarding.html#start");}}catch(e){}})();</script>
+<script>(function(){try{var v='5396a23',k="aghanim-proto-build",had=localStorage.getItem("aghanim-proto-v1")||localStorage.getItem("aghanim-proto-chat");if(localStorage.getItem(k)!==v){localStorage.removeItem("aghanim-proto-v1");localStorage.removeItem("aghanim-proto-chat");localStorage.setItem(k,v);if(had&&!/Onboarding\.html/.test(location.pathname))location.replace("Onboarding.html#start");}}catch(e){}})();</script>
 
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aghanim · Onboarding</title>
-<link rel="stylesheet" href="../aghanim-ui/tokens.css?v=78fca03">
-<link rel="stylesheet" href="../aghanim-ui/components.css?v=78fca03">
-<link rel="stylesheet" href="app/app.css?v=78fca03">
-<link rel="stylesheet" href="app/chat.css?v=78fca03">
-<link rel="stylesheet" href="app/dark-primary.css?v=78fca03"><!-- trying dark primary buttons (Daria, 27.09); remove this line to go back to blue -->
+<link rel="stylesheet" href="../aghanim-ui/tokens.css?v=5396a23">
+<link rel="stylesheet" href="../aghanim-ui/components.css?v=5396a23">
+<link rel="stylesheet" href="app/app.css?v=5396a23">
+<link rel="stylesheet" href="app/chat.css?v=5396a23">
+<link rel="stylesheet" href="app/dark-primary.css?v=5396a23"><!-- trying dark primary buttons (Daria, 27.09); remove this line to go back to blue -->
 <!-- Unbounded is the game's own font: used only inside the hub previews -->
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&display=swap" rel="stylesheet">
 </head>
@@ -33,8 +33,8 @@
   </div>
 </div>
 
-<script src="app/app.js?v=78fca03"></script>
-<script src="app/chat.js?v=78fca03"></script>
+<script src="app/app.js?v=5396a23"></script>
+<script src="app/chat.js?v=5396a23"></script>
 <script>
 (() => {
   const { $, $$, icon, nwIcon, mountChat } = AG;
@@ -88,9 +88,7 @@
         <div class="ob-build__shot"><div class="hubmini">${AG.hubPreview('desktop')}</div><div class="ob-build__veil"></div></div>
       </div>
       <div class="ob-list">${BUILD.map((b, i) => rowHTML(b, i, 'wait')).join('')}</div>
-    </div>
-      <button class="ob-restart" data-a="restart">${icon('refresh')}Restart</button>
-    </div>`;
+    </div></div>`;   // no Restart here any more (Daria, 28.09): prototype control lives in the avatar's menu now
   }
   /* where the build is, drawn still (a reload, "ready"): the parts done so far, the veil, the heading */
   function updateBuild() {
@@ -124,10 +122,10 @@
 
   /* ================= "See my hub": the hub over the screen (Daria, 27.09) =================
      Not a separate screen: a big browser window over the blurred split, the real hub inside — the whole home page,
-     scroll it, look, nothing to click. It scrolls a little by itself at first, so it reads as a site, not a picture.
+     scroll it, look, nothing to click. It doesn't scroll by itself (Daria, 29.09) — the person scrolls.
      One way on, to setting it up and launching. The browser's Back closes it (it's #hub). */
   function openShow() {
-    AG.showHub({ closeAttr: 'data-a="show-close"', scroll: 220,
+    AG.showHub({ closeAttr: 'data-a="show-close"',
       foot: `<button class="ag-btn ag-btn--primary ag-btn--xl ob-go" data-a="launch">Let’s make it live</button>` });
   }
   const closeShow = () => AG.closeHub();

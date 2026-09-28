@@ -21,7 +21,7 @@
  * (Daria, 26.09). An action with q asks that question; anything else goes to onAction(act, { kind: 'msg' }).
  * onChange(messages) fires after every change, so a page can keep the conversation between pages.
  * A message someone clicked into gets used: true — a page can drop the untouched ones when context changes.
- * pins: [{ text, note, done, of }] — unfinished work, a stack of strips at the top of the panel (a ring when it has steps).
+ * pins: [{ text, kind, sub, done, of }] — unfinished work at the top of the panel, each one the same card as a problem (a ring when it has steps).
  *      Click → onPin(chat, pin); its × hides the reminder → onPinClose(chat, pin). chat.setPins(list); chat.setPin(pin) — one or none.
  * A message with folded: true isn't drawn (a task put away into its strip). A step block shows Cancel (drop the task) when
  *      AG.chat.canCancel(widget) says so; the click goes to onAction('cancel').
@@ -506,15 +506,12 @@ AG.chat = (() => {
       <button class="chat__tool${m.vote === -1 ? ' is-on' : ''}" data-chat-tool="down" data-mid="${m.id}" aria-label="Off the mark">${icon('down')}</button>${when(m)}
     </div>`);
 
-    /* the pin: unfinished work — a ring with how many steps are done (pin.done / pin.of), otherwise Newton's spark;
-       no "Continue" word, the arrow says it (Daria, 26.09) */
-    const pinLead = (p) => (p.of ? `<span class="ag-ring chat__pin-ring" style="--v:${(p.done / p.of) * 100}" aria-hidden="true"></span>` : '');
-    /* unfinished work, one strip per task, stacked (Daria, 27.09 — settled): it can't be closed, it's the way back to the
-       task. No cross, no spark: the progress ring where the task has steps (verification 2/4, the event 3/5), the task,
-       under it how far it's got and where, and a chevron — a click picks the task up again at the end of the chat.
-       Cancelling a task is Cancel inside it. (onPinClose stays in the engine, nothing calls it now.) */
-    const pinRow = (p, i) => `<div class="chat__pin-row">
-      <button class="chat__pin" data-chat-pin="${i}" aria-label="Back to: ${esc(p.text)}">${pinLead(p)}<span class="chat__card-body"><b>${esc(p.text)}</b>${p.note ? `<small>${esc(p.note)}</small>` : ''}</span>${icon('right', 'chat__pin-go')}</button></div>`;
+    /* unfinished work, one per task, stacked (Daria, 27.09 — settled): it can't be closed, it's the way back to the task;
+       cancelling a task is Cancel inside it. (onPinClose stays in the engine, nothing calls it now.)
+       Built exactly like a problem card (Daria, 29.09: "the same attributes — build them the same"): the kind over the
+       title, the title with its arrow, one line (where it waits), the ring with the steps done — the card of the page, blue. */
+    const pinRow = (p, i) => `<div class="chat__pin-row">${ctaCard({ lv: 3, kind: p.kind, title: p.text, sub: p.sub,
+      sig: p.of ? { bar: (p.done / p.of) * 100, v: `${p.done}/${p.of}`, u: 'done' } : null }, `data-chat-pin="${i}"`)}</div>`;
     /* many unfinished tasks don't pile up (Daria, 28.09): past two they lie in a deck — the first on top, the edges of the
        others under it, and "N more"; a click fans the deck out, "Show less" folds it back */
     const pinHTML = () => {

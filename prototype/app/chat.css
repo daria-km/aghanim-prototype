@@ -120,7 +120,7 @@
 .chat__orb .ai-ico { width: 28px; height: 28px; color: var(--color-fg-primary); }
 @keyframes chat-orb { to { transform: translateY(-4px) rotate(8deg); } }
 @media (prefers-reduced-motion: reduce) { .chat__orb { animation: none; } }
-.chat__hero h2 { min-height: 28px; font: 600 22px/28px var(--font-sans); color: var(--color-text-tertiary); }   /* the kit's ordinary grey: quiet but readable (UX answers 28.09) */
+.chat__hero h2 { min-height: 24px; font: 400 16px/24px var(--font-sans); color: var(--color-text-primary); max-width: 32ch; }   /* Newton's own voice, a step up from his messages — not a bold grey heading (Daria, 29.09) */
 .chat__hero p { font: 400 14px/20px var(--font-sans); color: var(--color-text-secondary); max-width: 40ch; }
 
 /* ================= widgets Newton answers with ================= */
@@ -262,7 +262,7 @@
 
 /* ---------- pinned: unfinished work, one tap back to it ---------- */
 .chat__top { position: sticky; top: 0; z-index: 2; display: flex; flex-direction: column; gap: 6px; background: transparent; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }   /* glass over the aurora: what scrolls under it blurs away (Daria, 28.09) */
-.chat__top:not(:has(.chat__pin, .chat__alert, .chat__alerts .cta)) { display: none; }
+.chat__top:not(:has(.chat__pin-row, .chat__alert, .chat__alerts .cta)) { display: none; }
 .chat__pin-wrap:empty { display: none; }
 /* pin and alert are built the same (Daria, 26.09): the mark on the first line, a bold line, a grey note under it */
 .chat__card-body { flex: 1; min-width: 0; }
@@ -277,7 +277,7 @@
 .chat__pin .chat__pin-ring { flex: 0 0 16px; width: 16px; height: 16px; background: radial-gradient(closest-side, var(--color-fg-brand-tertiary-hover) calc(100% - 3px), transparent calc(100% - 2px)),
   conic-gradient(var(--color-fg-brand-primary) calc(var(--v) * 1%), var(--color-fg-primary) 0); }   /* the kit's ring, small; the part still to go is white (Daria, 27.09), the ring and the chevron on the text's middle */
 /* a stack of strips (Daria, 27.09): each with × on its right, on the first line */
-.chat__pin-wrap { display: flex; flex-direction: column; gap: 6px; }
+.chat__pin-wrap { display: flex; flex-direction: column; gap: 8px; }   /* the same gap as the problem cards under it (29.09) */
 .chat__pin-row { position: relative; }
 .chat__pin-row .chat__pin { padding-right: 40px; }
 .chat__pin-x { position: absolute; top: 7px; right: 8px; }
@@ -483,4 +483,7 @@
 .cw--steps .cw__body { padding-top: 8px; }
 .cw--steps .ob-row__res { font: 400 14px/20px var(--font-sans); color: var(--color-text-tertiary); -webkit-text-fill-color: var(--color-text-tertiary); }
 .cw--steps .ob-row { align-items: flex-start; }   /* the tick on the name's first line, even when the name wraps */
+/* ...so the path between the rings starts at this ring's bottom and ends at the next one's top (Daria, 29.09: it ran
+   6px short of one ring and 8px into the next — the onboarding numbers are for rings centred in the row) */
+.cw--steps .ob-row:not(:last-child)::before { top: 19px; bottom: -1px; }
 .cw--steps .ob-row__l { padding-top: 0; }

@@ -199,6 +199,7 @@ window.AG = (() => {
      working on (ag-btn--ai) gets his spark. Every icon stands after the words (Daria, 27.09 — one CSS rule, dark-primary.css).
      Skipped: buttons that already have an icon, icon-only buttons, data-noic. */
   const BTN_IC = [
+    [/\bgifts?\b/, null],   // a gift isn't "add a thing" — no plus on Add gift / Add gifts (Daria, 29.09)
     [/^(add|new)\b/, 'plus'], [/^link\b/, 'link'], [/^(change|edit|write)\b/, 'pen'], [/^(cancel|close|dismiss)\b/, 'x'],
     [/just watch/, 'eye'], [/^(not now|later)\b/, 'time'], [/^(delete|remove)\b/, 'trash'], [/^(schedule|extend)\b/, 'calendar'],
     [/^(publish|go live)/, 'globe'], [/^(let’s make it live|let's make it live)/, 'arrow'], [/^undo\b/, 'undo'], [/^redo\b/, 'redo'], [/^stop\b/, 'stop'],
@@ -891,7 +892,10 @@ window.AG = (() => {
     const el = $('.ob-show'), box = $('.ob-show__page'), f = $('.ob-show__frame'); if (!el || !box || !f) return;
     const w = SHOW_W[el.dataset.dev] || 1280, k = box.clientWidth / w;
     let h = 900;
-    try { const fr = f.contentDocument && f.contentDocument.querySelector('#stage .hub-frame'); if (fr) { fr.style.minHeight = '0'; h = Math.max(700, fr.scrollHeight); } } catch (e) { /* not ready */ }
+    try { const fr = f.contentDocument && f.contentDocument.querySelector('#stage .hub-frame');
+      if (fr) { fr.style.minHeight = '0'; h = Math.max(700, fr.scrollHeight);
+        /* the window under the page takes the hub's own ground: scrolling to an edge (or the trackpad's bounce) shows the hub, not white (Daria, 29.09) */
+        const win = $('.ob-show__win'); if (win) win.style.background = getComputedStyle(fr).backgroundColor; } } catch (e) { /* not ready */ }
     Object.assign(f.style, { width: `${w}px`, height: `${h}px`, transform: `scale(${k})` });
     box.style.height = `${Math.ceil(h * k)}px`;
   }
@@ -914,7 +918,8 @@ window.AG = (() => {
     f.addEventListener('load', () => {
       [150, 600, 1500].forEach((t) => setTimeout(fitShow, t));
       // no "Newton made this" shimmer over the hub: it's built already, here we just look at it (Daria, 28.09)
-      setTimeout(() => { const v = $('.ob-show__view'); if (v && scroll) v.scrollTo({ top: scroll, behavior: 'smooth' }); }, 900);
+      // no scrolling by itself either (Daria, 29.09: the jump down looked wrong) — the person scrolls; `scroll` is kept for a caller that wants it
+      if (scroll) setTimeout(() => { const v = $('.ob-show__view'); if (v) v.scrollTop = scroll; }, 900);
     });
     el.addEventListener('click', (e) => { if (e.target.closest('[data-show-close]') || e.target === el) closeHub(); });
     fitShow();
