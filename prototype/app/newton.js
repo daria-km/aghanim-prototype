@@ -317,12 +317,14 @@ AG.newton = (() => {
     chat.say({ tools: false, widget: { type: 'working', ai: true, kicker: 'Deciding for you', title: ids.length > 1 ? `${ids.length} things, one after another` : steps[0], steps: steps.slice(), at: 0, pct: 0 } }, 600).then((plan) => {
       const busy = () => chat.messages.some((m) => m.id !== plan.id && m.widget && !m.widget.done && ['working', 'options', 'fields'].includes(m.widget.type));
       const mine = new Set();
-      const me = planning = { plan, steps, i: 0, before: new Set(chat.messages.map((m) => m.id)), stopped: false, inner: false, queue: [] };
+      const here = new Set(cards(opts.route()).map((c) => c.id));
+      const me = planning = { plan, steps, i: 0, before: new Set(chat.messages.map((m) => m.id)), stopped: false, inner: false, queue: [],
+        stay: page !== 'dashboard' || ids.some((id) => here.has(id)), at: null };   // a job about this page's cards: you stay here; nothing of this page's — at the end you go where the result is
       syncAlerts();
       const run = (i) => {
         if (me.stopped) return;
         me.i = i;
-        if (i >= ids.length) { planning = null; finishAll(plan, steps, acts, mine); if (me.queue.length) setTimeout(() => me.queue.forEach((q) => task(q)), 1800); return; }   // then what you asked for meanwhile
+        if (i >= ids.length) { planning = null; if (!me.stay && me.at && me.at !== opts.route()) goTo(['dashboard', me.at]); finishAll(plan, steps, acts, mine); if (me.queue.length) setTimeout(() => me.queue.forEach((q) => task(q)), 1800); return; }   // then what you asked for meanwhile
         const b = snap(), before = new Set(chat.messages.map((m) => m.id)), t0 = Date.now();
         chat.opts.muffle = true;
         me.inner = true; doForMe(ids[i]); me.inner = false;   // the plan's own job, not you taking over
@@ -822,6 +824,10 @@ AG.newton = (() => {
     userMin = false; away = false; awayClicks = 0;    // a card click wants Newton back, on its task
     if (showing !== ctxKey()) { store.carry = null; enter(); }   // a card on this page belongs to this page's conversation
     if (openAlready(id)) return sync(true);
+    /* ...or open on another page (Daria, 28.09: what's started somewhere gets finished, not started twice) — the card takes
+       you to it, the way its strip does */
+    const elsewhere = !planning && allOpen().find((t) => t.key !== showing && t.taskId === id);
+    if (elsewhere) return onPin(null, { go: elsewhere.key, id: elsewhere.id });
     if (/^(add|edit):/.test(id)) {
       formTask(id);
       const mine = chat.messages.slice().reverse().find((m) => m.from === 'you' && m.taskId === id);
@@ -990,6 +996,9 @@ AG.newton = (() => {
   /* switch the page on the left, then let Newton go on. Across pages the next step waits in the state. */
   function goTo(to, next) {
     const [p, hash] = to;
+    /* inside "Decide everything" the page doesn't hop from job to job (Daria, 28.09: the chat takes you somewhere only when
+       you really need to go there) — the plan notes where the result is and decides at the end (finishAll) */
+    if (planning && !next && p === 'dashboard' && page === 'dashboard') { planning.at = hash; return; }
     lookAtPage = false; away = false; awayClicks = 0;  // Newton moves the work on: the width follows the step again
     /* Newton takes you to another page mid-task: this conversation comes along (it's the same work) */
     if (p !== page || (p === 'dashboard' && opts.route() !== hash)) { store.carry = { key: showing, moved: true }; saveStore(); }
@@ -1295,6 +1304,12 @@ AG.newton = (() => {
     if (!chat) return;
     const key = ctxKey(), want = pickThread();
     if (want !== showing) { showing = want; chat.load((store.threads[want] || {}).messages || []); }
+    /* a conversation Newton carried here, opened by a strip or a card: the task comes to "now" too, as on its own page —
+       left in the middle, what it says next would land after other tasks and read as theirs */
+    if (want !== key && store.resume) {
+      if (tasksIn(want, chat.messages).some((t) => t.id === store.resume)) { actives()[want] = store.resume; lift(store.resume); }
+      store.resume = null;
+    }
     /* the page's own conversation gets the page's messages, fresh each time you open it */
     if (want === key && (ctxFor !== key || force)) {
       /* a real visit (you came to this page) vs. a redraw (something changed while you're here — mid-task, say):
@@ -1368,7 +1383,7 @@ AG.newton = (() => {
     const out = [];
     /* a task whose card is right there on the page gets no strip here (Daria, 28.09: the same thing twice, left and right) —
        the card is the way back to it */
-    const onPage = new Set(page === 'dashboard' ? cards(opts.route()).map((c) => c.id) : []);
+    const onPage = new Set(page === 'dashboard' ? cards(opts.route()).map((c) => ALIAS[c.id] || c.id) : []);   // the card's id as the task knows it (l-verify → verify)
     Object.keys(Object.assign({}, store.threads, { [showing]: 1 })).forEach((k) => {
       tasksIn(k, threadMsgs(k)).filter((t) => t.open && !(k === showing && t.id === actives()[showing]) && !(store.muted || {})[t.id] && !(k === showing && onPage.has(t.taskId))).forEach((t) => {
         const e = ev(), isEv = t.taskId === 'halloween';
