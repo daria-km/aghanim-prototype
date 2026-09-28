@@ -133,13 +133,13 @@ AG.newton = (() => {
      page until fixed (Daria, 26.09 — a problem is an alert, a suggestion is a question in the conversation) */
   const HUB_ALERTS = () => [
     /* the same card as on the Items page (Daria, 28.09: they're about one thing) */
-    unlinked() ? { lv: 1, type: 'Fix', title: 'Purchases can’t be delivered', sub: 'They aren’t linked to your game.', sig: { v: `${unlinked()}/${STORE_ITEMS}`, u: 'items', bar: Math.round(unlinked() / STORE_ITEMS * 100) }, action: { label: 'Link', act: 'link-all' } } : null,
-    noImg() ? { lv: 2, type: 'Fix', title: `${noImg()} items have no image`, action: { label: 'Generate', act: 'gen-images' } } : null,
+    unlinked() ? { id: 'item-links', lv: 1, type: 'Fix', title: 'Purchases can’t be delivered', sub: 'They aren’t linked to your game.', sig: { v: `${unlinked()}/${STORE_ITEMS}`, u: 'items', bar: Math.round(unlinked() / STORE_ITEMS * 100) }, action: { label: 'Link', act: 'link-all' } } : null,
+    noImg() ? { id: 'item-images', lv: 2, type: 'Fix', title: `${noImg()} items have no image`, action: { label: 'Generate', act: 'gen-images' } } : null,
     /* the other problems of the game show here too (Daria, 28.09): Home's broken and tolerable cards, each opening its own task */
     /* only what needs a reaction now (Daria, 28.09: not everything): the broken ones — tolerable and advice stay on Home */
     ...cards('home').filter((c) => c.lv === 1 && c.id !== 'item-links')
-      .map((c) => ({ lv: c.lv, type: c.type, title: c.title, sub: c.sub, sig: c.sig, action: { label: c.cta, act: 'task:' + c.id } }))].filter(Boolean);
-  const syncAlerts = () => { if (chat) chat.setAlerts(page === 'hub' ? HUB_ALERTS() : []); };
+      .map((c) => ({ id: c.id, lv: c.lv, type: c.type, title: c.title, sub: c.sub, sig: c.sig, action: { label: c.cta, act: 'task:' + c.id } }))].filter(Boolean);
+  const syncAlerts = () => { if (!chat) return; chat.opts.alertsAll = !planning; chat.setAlerts(page === 'hub' ? HUB_ALERTS() : []); };   // no second "Decide everything" while one runs
 
   /* Empty sections: nothing to generate from — 2–3 ready starts, each a card; its task makes the draft */
   const STARTS = {
@@ -305,7 +305,7 @@ AG.newton = (() => {
   let planning = null;
   function stopPlan() {
     const p = planning; if (!p || p.stopped) return;
-    p.stopped = true; planning = null; chat.opts.muffle = false;
+    p.stopped = true; planning = null; chat.opts.muffle = false; syncAlerts();
     chat.messages.forEach((m) => { if (!p.before.has(m.id) && m.id !== p.plan.id && m.archived && !(m.widget && m.widget.type === 'working')) chat.update(m.id, { archived: false }); });   // the job it was on shows as it is
     const steps = p.steps.map((s, k) => (k < p.i ? s : k === p.i ? `${s} — stopped, you took over` : `${s} — left for you`));
     chat.widget(p.plan.id, { kicker: 'Stopped — you started something else', steps, at: p.i, stopped: true });
@@ -318,6 +318,7 @@ AG.newton = (() => {
       const busy = () => chat.messages.some((m) => m.id !== plan.id && m.widget && !m.widget.done && ['working', 'options', 'fields'].includes(m.widget.type));
       const mine = new Set();
       const me = planning = { plan, steps, i: 0, before: new Set(chat.messages.map((m) => m.id)), stopped: false, inner: false, queue: [] };
+      syncAlerts();
       const run = (i) => {
         if (me.stopped) return;
         me.i = i;
@@ -352,7 +353,7 @@ AG.newton = (() => {
       chat.messages.forEach((m) => { if (m.archived && m.from === 'newton' && !mine.has(m.id)) mine.add(m.id); });
       chat.opts.muffle = false;
       chat.newton({ tools: false, text: `Done — ${steps.length === 2 ? 'both handled' : steps.length > 2 ? `all ${steps.length} handled` : 'handled'}.${drafts}`, actions: acts });
-      syncSummary();   // the summary above the plan no longer offers what the plan just did
+      syncSummary(); syncAlerts();   // the summary above the plan no longer offers what the plan just did
     }, 900);
   }
   let greetT = 0;

@@ -120,7 +120,7 @@
 .chat__orb .ai-ico { width: 28px; height: 28px; color: var(--color-fg-primary); }
 @keyframes chat-orb { to { transform: translateY(-4px) rotate(8deg); } }
 @media (prefers-reduced-motion: reduce) { .chat__orb { animation: none; } }
-.chat__hero h2 { min-height: 24px; font: 400 16px/24px var(--font-sans); color: var(--color-text-primary); max-width: 32ch; }   /* Newton's own voice, a step up from his messages — not a bold grey heading (Daria, 29.09) */
+.chat__hero h2 { min-height: 24px; font: 400 16px/24px var(--font-sans); color: var(--color-text-quarterary-hover); max-width: 32ch; }   /* a step up from his messages, not bold; pale grey — a hint, not a message (Daria, 29.09) */
 .chat__hero p { font: 400 14px/20px var(--font-sans); color: var(--color-text-secondary); max-width: 40ch; }
 
 /* ================= widgets Newton answers with ================= */
@@ -376,6 +376,8 @@
 
 /* alerts — a problem at the top of the panel, with the pin; the same build as the pin, in warning colours */
 .chat__alerts { display: flex; flex-direction: column; gap: 8px; }
+.chat__alerts-box { display: flex; flex-direction: column; gap: 12px; }
+.chat__alerts-all { align-self: flex-start; }
 .chat__alerts:empty { display: none; }
 .chat__alert { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--radius-xl); border: 1px solid var(--color-fg-warning-secondary);
   background: var(--color-fg-warning-tertiary); box-shadow: var(--shadow-xs); }   /* the kit's warning background as is (no mixed tones, Daria 27.09) */

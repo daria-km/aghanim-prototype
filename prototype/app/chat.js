@@ -394,7 +394,7 @@ AG.chat = (() => {
       setSuggestions(list) { o.suggestions = list || []; const s = $('.chat__sugg', el); if (s) s.innerHTML = suggHTML(); },
       setPins(list) { o.pins = list || []; const n = $('.chat__pin-wrap', el); if (n) n.outerHTML = pinHTML(); },
       setPin(pin) { chat.setPins(pin ? [pin] : []); },
-      setAlerts(list) { o.alerts = list || []; const n = $('.chat__alerts', el); if (n) n.outerHTML = alertsHTML(); },
+      setAlerts(list) { o.alerts = list || []; const n = $('.chat__alerts-box', el); if (n) n.outerHTML = alertsHTML(); },
       setState(state, extra) { Object.assign(o, { state }, extra || {}); draw(); },
       /* a new width for a new context: the panel slides, the conversation stays as it was */
       width(state, extra) { if (o.state === state && !extra) return; Object.assign(o, { state }, extra || {}); draw(); },
@@ -532,13 +532,17 @@ AG.chat = (() => {
     /* several problems don't pile up (Daria, 28.09): past one they lie in a deck — the most urgent on top, the edges of the
        others under it and "N more"; a click fans them out, each card opens its own fix, "Show less" folds them back */
     const alertCard = (a, i) => ctaCard({ lv: a.lv || 2, kind: a.type, title: a.title, sub: a.sub || a.note, sig: a.sig, cta: a.action && a.action.label }, a.action ? `data-chat-alert="${i}"` : '');
-    const alertsHTML = () => {
-      const list = o.alerts || [];
+    /* several problems — Newton can take them all (Daria, 29.09: "why not decide all of them"): "Decide everything for me"
+       under the deck, when every problem knows its task (alert.id); the page turns it off while a plan runs (o.alertsAll) */
+    const alertsAll = (list) => (list.length > 1 && o.alertsAll !== false && list.every((a) => a.id)
+      ? `<button class="${AI} chat__alerts-all" data-chat-alerts-all>Decide everything for me</button>` : '');
+    const alertsDeck = (list) => {
       if (list.length <= 1) return `<div class="chat__alerts">${list.map(alertCard).join('')}</div>`;
       if (o.alertsOpen) return `<div class="chat__alerts is-fanned">${list.map(alertCard).join('')}<button class="chat__pin-less" data-chat-alerts="close">Show less</button></div>`;
       return `<div class="chat__alerts is-deck" style="--under:${Math.min(2, list.length - 1)}">${alertCard(list[0], 0)}
         <button class="chat__alerts-more" data-chat-alerts="open" aria-label="Show all ${list.length} problems">${list.length - 1} more to fix</button></div>`;
     };
+    const alertsHTML = () => { const list = o.alerts || []; return `<div class="chat__alerts-box">${alertsDeck(list)}${alertsAll(list)}</div>`; };
     const dockHTML = () => `<div class="chat__dock"><div class="chat__col">
       <div class="chat__sugg">${suggHTML()}</div>
       <form class="chat__field" data-chat-form>
@@ -591,6 +595,8 @@ AG.chat = (() => {
         const dh = e.target.closest('[data-chat-did]');
         if (dh) { const m = o.messages.find((x) => String(x.id) === dh.dataset.chatDid); if (m) chat.update(m.id, { didOpen: !m.didOpen }); return; }
         const al = e.target.closest('[data-chat-alert]');
+        if (e.target.closest('[data-chat-alerts-all]')) { o.alertsOpen = false;
+          if (o.onAction) o.onAction(`do-all:${o.alerts.map((a) => a.id).join(',')}`, { kind: 'msg', chat, msg: {} }); return; }
         if (al) { const a = o.alerts[Number(al.dataset.chatAlert)]; if (o.alertsOpen) { o.alertsOpen = false; chat.setAlerts(o.alerts); }   // picked one: the deck folds, the fix gets the room
           if (a && o.onAction) o.onAction(a.action.act, { kind: 'alert', chat, alert: a }); return; }
 
