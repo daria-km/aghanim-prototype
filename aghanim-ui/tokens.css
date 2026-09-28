@@ -1,0 +1,98 @@
+/* Aghanim dashboard — design tokens
+ * Source: dashboard.aghanim.com (Tailwind v4 theme), mirrored 1:1 in the Figma UI kit.
+ * Variable names are the product CSS names, so code written against this file reads like the real product.
+ */
+/* Fonts are bundled (fonts/), no internet needed. Inter = product UI font (the product ships its own build "InterAg"). */
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: swap; src: url('fonts/inter-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: swap; src: url('fonts/inter-cyrillic-400-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 500; font-display: swap; src: url('fonts/inter-latin-500-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 500; font-display: swap; src: url('fonts/inter-cyrillic-500-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: swap; src: url('fonts/inter-latin-600-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: swap; src: url('fonts/inter-cyrillic-600-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; font-display: swap; src: url('fonts/inter-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; font-display: swap; src: url('fonts/inter-cyrillic-700-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Geist Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('fonts/geist-mono-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Geist Mono'; font-style: normal; font-weight: 500; font-display: swap; src: url('fonts/geist-mono-latin-500-normal.woff2') format('woff2'); }
+
+:root {
+  /* ---------- Primitives (Tailwind palette) — do not use directly in UI ---------- */
+  --color-slate-50: #f8fafc; --color-slate-100: #f1f5f9; --color-slate-200: #e2e8f0; --color-slate-300: #cbd5e1; --color-slate-400: #94a3b8; --color-slate-500: #64748b; --color-slate-600: #475569; --color-slate-700: #334155; --color-slate-800: #1e293b; --color-slate-900: #0f172a; --color-slate-950: #020617;
+  --color-sky-50: #f0f9ff; --color-sky-100: #e0f2fe; --color-sky-200: #bae6fd; --color-sky-300: #7dd3fc; --color-sky-400: #38bdf8; --color-sky-500: #0ea5e9; --color-sky-600: #0284c7; --color-sky-700: #0369a1; --color-sky-800: #075985; --color-sky-900: #0c4a6e; --color-sky-950: #082f49;
+  --color-green-50: #f0fdf4; --color-green-100: #dcfce7; --color-green-200: #bbf7d0; --color-green-300: #86efac; --color-green-400: #4ade80; --color-green-500: #22c55e; --color-green-600: #16a34a; --color-green-700: #15803d; --color-green-800: #166534; --color-green-900: #14532d; --color-green-950: #052e16;
+  --color-orange-50: #fff7ed; --color-orange-100: #ffedd5; --color-orange-200: #fed7aa; --color-orange-300: #fdba74; --color-orange-400: #fb923c; --color-orange-500: #f97316; --color-orange-600: #ea580c; --color-orange-700: #c2410c; --color-orange-800: #9a3412; --color-orange-900: #7c2d12; --color-orange-950: #431407;
+  --color-red-50: #fef2f2; --color-red-100: #fee2e2; --color-red-200: #fecaca; --color-red-300: #fca5a5; --color-red-400: #f87171; --color-red-500: #ef4444; --color-red-600: #dc2626; --color-red-700: #b91c1c; --color-red-800: #991b1b; --color-red-900: #7f1d1d; --color-red-950: #450a0a;
+  --color-pink-50: #fdf2f8; --color-pink-100: #fce7f3; --color-pink-200: #fbcfe8; --color-pink-300: #f9a8d4; --color-pink-400: #f472b6; --color-pink-500: #ec4899; --color-pink-600: #db2777; --color-pink-700: #be185d; --color-pink-800: #9d174d; --color-pink-900: #831843; --color-pink-950: #500724;
+  --color-lime-50: #f7fee7; --color-lime-100: #ecfccb; --color-lime-200: #d9f99d; --color-lime-300: #bef264; --color-lime-400: #a3e635; --color-lime-500: #84cc16; --color-lime-600: #65a30d; --color-lime-700: #4d7c0f; --color-lime-800: #3f6212; --color-lime-900: #365314; --color-lime-950: #1a2e05;
+  --color-violet-50: #f5f3ff; --color-violet-100: #ede9fe; --color-violet-200: #ddd6fe; --color-violet-300: #c4b5fd; --color-violet-400: #a78bfa; --color-violet-500: #8b5cf6; --color-violet-600: #7c3aed; --color-violet-700: #6d28d9; --color-violet-800: #5b21b6; --color-violet-900: #4c1d95; --color-violet-950: #2e1065;
+  --color-white: #ffffff; --color-black: #000000;
+
+  /* ---------- Semantic colors (use these) ---------- */
+  --color-bg-primary: var(--color-slate-100); --color-bg-secondary: var(--color-white);
+  --color-text-primary: var(--color-black); --color-text-secondary: var(--color-slate-600); --color-text-secondary-hover: var(--color-slate-700); --color-text-tertiary: var(--color-slate-500); --color-text-tertiary-hover: var(--color-slate-500); --color-text-quarterary: var(--color-slate-300); --color-text-quarterary-hover: var(--color-slate-400); --color-text-disabled: var(--color-slate-400); --color-text-inverse: var(--color-white); --color-text-gray-primary: var(--color-slate-600);
+  --color-text-brand-primary: var(--color-sky-500); --color-text-brand-secondary: var(--color-sky-600); --color-text-brand-tertiary: var(--color-sky-700); --color-text-brand-solid: var(--color-sky-900);
+  --color-text-success-primary: var(--color-green-600); --color-text-success-secondary: var(--color-green-500); --color-text-success-solid: var(--color-green-900); --color-text-warning-primary: var(--color-orange-600); --color-text-warning-solid: var(--color-orange-900);
+  --color-text-error-primary: var(--color-red-600); --color-text-error-secondary: var(--color-red-500); --color-text-error-hover: var(--color-red-700); --color-text-error-solid: var(--color-red-900); --color-text-pink-tertiary: var(--color-pink-400); --color-text-pink-solid: var(--color-pink-900); --color-text-lime-solid: var(--color-lime-900); --color-text-violet-solid: var(--color-violet-900);
+  --color-fg-primary: var(--color-white); --color-fg-primary-hover: var(--color-slate-50); --color-fg-primary-alt: var(--color-slate-100); --color-fg-secondary: var(--color-slate-50); --color-fg-secondary-hover: var(--color-slate-100); --color-fg-secondary-alt: var(--color-slate-200); --color-fg-tertiary: var(--color-slate-200); --color-fg-tertiary-hover: var(--color-slate-300); --color-fg-tertiary-alt: var(--color-slate-300); --color-fg-disabled: var(--color-slate-100); --color-fg-overlay: #64748b80; --color-fg-black-10: #0000001a;
+  --color-fg-brand-primary: var(--color-sky-500); --color-fg-brand-primary-hover: var(--color-sky-400); --color-fg-brand-primary-pressed: var(--color-sky-300); --color-fg-brand-secondary: var(--color-sky-200); --color-fg-brand-tertiary: var(--color-sky-50); --color-fg-brand-tertiary-hover: var(--color-sky-100); --color-fg-brand-tertiary-pressed: var(--color-sky-200);
+  --color-fg-gray-primary: var(--color-slate-200); --color-fg-gray-primary-hover: var(--color-slate-300); --color-fg-gray-secondary: var(--color-slate-100); --color-fg-gray-tertiary: var(--color-slate-50);
+  --color-fg-success-primary: var(--color-green-300); --color-fg-success-secondary: var(--color-green-200); --color-fg-success-tertiary: var(--color-green-50); --color-fg-success-solid: var(--color-green-500);
+  --color-fg-warning-primary: var(--color-orange-300); --color-fg-warning-primary-error: var(--color-orange-400); --color-fg-warning-secondary: var(--color-orange-200); --color-fg-warning-tertiary: var(--color-orange-50); --color-fg-warning-solid: var(--color-orange-500);
+  --color-fg-error-primary: var(--color-red-500); --color-fg-error-primary-hover: var(--color-red-400); --color-fg-error-secondary: var(--color-red-200); --color-fg-error-tertiary: var(--color-red-50); --color-fg-error-tertiary-alt: var(--color-red-50); --color-fg-error-tertiary-hover: var(--color-red-100); --color-fg-error-solid: var(--color-red-500);
+  --color-fg-pink-primary: var(--color-pink-300); --color-fg-pink-secondary: var(--color-pink-200); --color-fg-pink-tertiary: var(--color-pink-50); --color-fg-lime-primary: var(--color-lime-300); --color-fg-lime-secondary: var(--color-lime-200); --color-fg-lime-tertiary: var(--color-lime-50); --color-fg-violet-secondary: var(--color-violet-200);
+  --color-border-primary: var(--color-slate-200); --color-border-primary-hover: var(--color-slate-300); --color-border-secondary: var(--color-slate-100); --color-border-secondary-hover: var(--color-slate-200); --color-border-tertiary: var(--color-slate-500); --color-border-disabled: var(--color-slate-200); --color-border-img: #0000001a;
+  --color-border-brand: var(--color-sky-500); --color-border-brand-filled: var(--color-sky-500); --color-border-brand-solid-alt: var(--color-sky-600); --color-border-brand-ring: #0ea5e91a;
+  --color-border-success: var(--color-green-400); --color-border-success-ring: #22c55e1a; --color-border-warning: var(--color-orange-400); --color-border-warning-ring: #f973161a; --color-border-error: var(--color-red-400); --color-border-error-solid: var(--color-red-500);
+
+  /* ---------- Sidebar (shadcn sidebar layer, exact values from code) ---------- */
+  --sidebar: #f1f5f9; --sidebar-accent: #e6ebf0; --sidebar-accent-foreground: #1d293d; --sidebar-border: #e0e5ea; --sidebar-foreground: #697281; --sidebar-muted-foreground: #adb4bd; --sidebar-primary: #1d293d; --sidebar-ring: #90a1b9;
+
+  /* ---------- Base (shadcn layer used by product components) ---------- */
+  --background: #ffffff; --foreground: #1d293d; --card: #ffffff; --card-foreground: #1d293d; --popover: #ffffff; --popover-foreground: #1d293d;
+  --primary: #00a6f4; --primary-foreground: #f8fafc; --secondary: #66738c14; --secondary-foreground: #1d293d; --muted: #66738c14; --muted-foreground: #586880;
+  --accent: #66738c14; --accent-foreground: #1d293d; --destructive: #fb2c36; --destructive-foreground: #c10007; --success: #00bc7d; --success-foreground: #007a55;
+  --warning: #fe9a00; --warning-foreground: #bb4d00; --info: #00a6f4; --info-foreground: #0069a8; --border: #00000014; --input: #0000001a;
+  --ring: #90a1b9;
+
+  /* ---------- Misc: overlays, toasts (Sonner), charts (ECharts), gradients ---------- */
+  --color-primary-8: #00a6ff14; --color-overlay-modal: #63748b4d; --color-overlay-settings: #c1c8d1; --color-overlay-settings-surface: #dfe3e7;
+  --color-toast-success-bg: #ecfdf3; --color-toast-success-border: #bffcd9; --color-toast-success-text: #008a2e; --color-toast-error-bg: #fff0f0;
+  --color-toast-error-border: #ffe0e1; --color-toast-error-text: #e60000; --color-toast-warning-bg: #fffcf0; --color-toast-warning-border: #fdf5d3;
+  --color-toast-warning-text: #dc7609; --color-toast-info-bg: #f0f8ff; --color-toast-info-border: #d3e0fd; --color-toast-info-text: #0973dc;
+  --color-chart-primary: var(--color-sky-500); --color-chart-primary-previous: #0ea5e94d; --color-chart-success: var(--color-green-300); --color-chart-area-success: #22c55e4d;
+  --color-chart-neutral: var(--color-slate-200); --color-chart-gray: var(--color-slate-400); --color-chart-grid: var(--color-slate-100); --color-chart-axis: var(--color-slate-500);
+  --color-gradient-gs-from: #8ec5ff; --color-gradient-gs-to: #fda5d5;
+
+  /* ---------- AI (Newton) — product's own AI visual language ---------- */
+  --ai-surface: linear-gradient(90deg, var(--color-fg-pink-tertiary), var(--color-fg-brand-tertiary));   /* Alert variant "ai" */
+  --ai-border: linear-gradient(90deg, var(--color-gradient-gs-from), var(--color-gradient-gs-to));       /* Getting started widget border */
+  --ai-accent: var(--color-text-pink-tertiary);                                                           /* AI label / icon color */
+  --ai-text: var(--color-text-secondary);
+
+  /* ---------- Typography ---------- */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ---------- Spacing (Tailwind v4: 1 step = 4px) ---------- */
+  --spacing: 0.25rem;
+
+  /* ---------- Radius ---------- */
+  --radius-xs: 0.125rem; --radius-sm: 0.3rem; --radius-md: 0.4rem; --radius-lg: 0.5rem; --radius-xl: 0.7rem; --radius-2xl: 0.9rem; --radius-2xl1: 1.125rem; --radius-onboarding: 36px; --radius-full: 9999px; --radius-rounded: 0.25rem;
+
+  /* ---------- Shadows ---------- */
+  --shadow-xs: 0 1px 2px 0 #1018280d;
+  --shadow-md: 0 2px 4px -2px #1018280f, 0 4px 8px -2px #1018281a;
+  --shadow-lg: 0 4px 6px -2px #10182808, 0 12px 16px -4px #10182814;
+  --shadow-xl: 0 8px 8px -4px #10182808, 0 20px 24px -4px #10182814;
+  --shadow-2xl: 0 24px 48px -12px #1018282e;
+  --shadow-toast: 0 4px 12px rgba(0, 0, 0, .1);
+  --shadow-inner-img: inset 0 0 0 1px #0000001a;
+  --shadow-highlight: inset 0 1px 0 0 #ffffff29;
+  --ring-brand: 0 0 0 2px #0097e41a;       /* ring-2 ring-brand — checked / focused controls */
+  --ring-brand-1: 0 0 0 1px var(--color-border-brand);
+  --ring-error: 0 0 0 2px #ef44441a;
+  --ring-focus: 0 0 0 1px #fff, 0 0 0 3px var(--ring);
+
+  /* ---------- Layout ---------- */
+  --app-sidebar-width: 240px; --newton-sidebar-width: 320px; --form-width: 360px; --height-app-banner: 28px;
+  --container-xs: 20rem; --container-md: 28rem; --container-lg: 32rem; --container-xl: 36rem; --container-2xl: 42rem; --container-3xl: 48rem; --container-4xl: 56rem;
+}

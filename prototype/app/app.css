@@ -1,0 +1,832 @@
+/* Shared prototype styles on top of the Aghanim kit (tokens.css + components.css).
+ * Only kit tokens here. Raw colors appear only inside .hubmini / .hub-* (the customer's game theme). */
+
+html, body { margin: 0; min-height: 100%; }
+body { font-family: var(--font-sans); color: var(--foreground); background: var(--color-bg-secondary); -webkit-font-smoothing: antialiased; }
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+h1, h2, h3, p { margin: 0; }
+a { color: inherit; }
+button { font-family: inherit; }
+
+/* ---------- small shared bits ---------- */
+.logo-mark { width: 28px; height: 28px; border-radius: var(--radius-md); background: var(--foreground); color: var(--color-text-inverse); display: inline-grid; place-items: center; font: 700 13px/1 var(--font-sans); flex-shrink: 0; }
+.game-ico { width: 24px; height: 24px; border-radius: var(--radius-md); flex-shrink: 0; background: linear-gradient(135deg, #8F7CF0, #3A2A7A); position: relative; } /* game art */
+.game-ico::after { content: ""; position: absolute; inset: 30%; border-radius: 3px; background: #F2B33D; transform: rotate(45deg); }
+.game-ico--lg { width: 40px; height: 40px; border-radius: var(--radius-lg); }
+.ai-ico { width: 14px; height: 14px; flex-shrink: 0; color: var(--ai-accent); }
+.nw-label { display: inline-flex; align-items: center; gap: 4px; font: 500 12px/16px var(--font-sans); color: var(--color-text-secondary); white-space: nowrap; }
+.ag-spacer { flex: 1; }
+.muted { color: var(--color-text-tertiary); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.proto-btn { height: 28px; padding: 0 10px; border-radius: var(--radius-md); border: 1px dashed var(--color-text-quarterary-hover); background: transparent; color: var(--color-text-tertiary); font: 500 12px/16px var(--font-sans); cursor: pointer; }
+.proto-btn:hover { background: var(--color-fg-secondary); color: var(--color-text-secondary); }
+.proto-btn.is-on { border-style: solid; color: var(--color-text-primary); background: var(--color-fg-secondary); }
+.proto-note { padding: 12px; border-radius: var(--radius-md); border: 1px dashed var(--color-text-quarterary-hover); color: var(--color-text-tertiary); font: 400 14px/20px var(--font-sans); }
+.proto-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font: 500 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+
+/* Newton action chips (product AI style) */
+.nw-chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 9999px; border: 1px solid var(--color-border-img); background: var(--ai-surface); color: var(--color-text-secondary); font: 500 12px/16px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.nw-chip:hover { border-color: var(--color-fg-pink-secondary); color: var(--color-text-primary); }
+.nw-chips { display: flex; gap: 6px; padding: 6px; border-radius: 9999px; background: var(--color-fg-primary); box-shadow: var(--shadow-lg); }
+/* stacked variant: in the Newton panel the chips wrap over several rows, so the floating pill bar is wrong there */
+.nw-chips--stack { flex-wrap: wrap; gap: 6px; padding: 0; border-radius: 0; background: none; box-shadow: none; }
+
+/* Magic (Daria, 28.09, after Aceternity's Dotted Glow Background): a soft-edged field of breathing dots over the block Newton
+   just made, the brightest glowing in his colours; under it the block is softly blurred; the dots go out in a wave from the
+   middle. AG.magic(el) in app.js places it; nothing to add on a page. */
+.magic { position: absolute; z-index: 20; pointer-events: none; }
+.magic__haze { position: absolute; inset: 0; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+  animation: magic-haze-in .24s ease-out both; transition: opacity .7s var(--ease-out, ease-out); }
+.magic.is-leaving .magic__haze { opacity: 0; }
+@keyframes magic-haze-in { from { opacity: 0; } }
+.magic canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.magic-in > :not(.magic), tr.magic-in > td { animation: magic-in 1.85s var(--ease-out, ease-out) both; }
+@keyframes magic-in { 0%, 55% { opacity: .6; } 100% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .magic { display: none; } .magic-in > *, tr.magic-in > td { animation: none; } }
+
+/* ---------- app shell ---------- */
+/* Two windows on a gray backdrop (Daria, 26.09, NotebookLM as the reference): the left window holds
+   everything that isn't Newton (menu + page, or the solo rail), Newton is the right one. 16px between
+   the windows and from the edges. The header sits straight on the backdrop, no window of its own. */
+.app { min-height: 100vh; display: flex; flex-direction: column; background: var(--sidebar); }
+.app--fixed { height: 100vh; }
+/* One vertical (Daria, 27.09): the header's panels line up with the windows under them — 16px from the window edge on
+   both sides, like the work area. */
+.app__header { height: 64px; flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 0 16px; background: var(--sidebar); position: relative; z-index: 30; }
+.app__header .hdr-title { font: 500 14px/20px var(--font-sans); color: var(--color-text-tertiary); margin-left: 4px; }
+/* a quiet helper line (Hub: publish state) — supporting, it only helps */
+.app__header .hdr-note { font: 400 12px/16px var(--font-sans); color: var(--color-text-quarterary-hover); white-space: nowrap; }
+.dd { position: relative; }
+/* the panel: drawn like Hub's bottom bar — white, a hairline, groups split by a thin line */
+.hdr-bar { display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: var(--radius-xl); border: 1px solid var(--color-border-secondary); background: var(--color-fg-primary); box-shadow: var(--shadow-xs); }
+.hdr-sep { width: 1px; height: 22px; margin: 0 4px; background: var(--color-border-secondary); flex-shrink: 0; }
+/* the avatar is just the avatar (Daria, 27.09); its centre lines up with the sidebar's icons below: 16 + 8 + 8 + 9 = 41 */
+.hdr-av { width: 28px; height: 28px; margin: 0 2px 0 6px; padding: 0; border: 0; border-radius: var(--radius-md); background: var(--color-fg-pink-primary); color: var(--color-text-pink-solid);
+  display: inline-grid; place-items: center; cursor: pointer; font: 600 12px/1 var(--font-sans); transition: box-shadow var(--dur-1) var(--ease-std); }   /* a coloured square, rounded like the game's icon (Daria, 28.09) */
+.hdr-av:hover, .hdr-av[aria-expanded="true"] { box-shadow: 0 0 0 3px var(--color-fg-secondary-alt); }
+.hdr-av:focus-visible { outline: none; box-shadow: var(--ring-brand); }
+.switch { height: 36px; min-width: 168px; padding: 0 10px 0 8px; gap: 8px; }   /* the kit select with its border — the same element as Hub's page picker (Daria, 28.09) */
+.switch > span:not(.logo-mark):not(.game-ico) { flex: 1; }
+.switch .game-ico, .switch .logo-mark { flex: 0 0 24px; width: 24px; height: 24px; font-size: 11px; }
+.switch:disabled { cursor: default; color: var(--color-text-tertiary); }
+.hdr-bar .ag-btn { height: 36px; }
+.dd__menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; width: 280px; }
+.dd__menu--right { left: auto; right: 0; }
+.dd__menu .text-section-label { padding: 8px 6px 4px; }
+.dd__menu a.ag-menu__item { text-decoration: none; }
+.dd__menu kbd { margin-left: auto; font: 400 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+.app__body { --split-gap: 16px; flex: 1; display: flex; gap: var(--split-gap); min-height: 0; padding: var(--split-gap); }
+.app__header + .app__body { padding-top: 4px; }   /* the header already leaves 12px under its controls: 12 + 4 = 16 */
+/* .app__pane is added by app.js on every page — see boot */
+.app__pane { flex: 1; min-width: 0; min-height: 0; display: flex; background: var(--color-bg-secondary); border-radius: var(--radius-xl); overflow: clip; }
+.app__pane .app__side, .app__pane .panel { background: var(--color-bg-secondary); }
+.app__pane .app__side, .app__pane .panel--left { border-right-color: var(--color-border-secondary); }
+.app__side { width: var(--app-sidebar-width); flex-shrink: 0; padding-top: 16px; padding-left: 8px; padding-right: 8px; border-right: 1px solid var(--sidebar-border); transition: width var(--dur-layout) var(--ease-layout); overflow: hidden; }
+/* collapsed: icons only — the Dashboard sidebar and Hub's page list alike, so you always see where you are (Daria, 26.09) */
+.side-collapsed .app__side { width: 50px; }   /* folded: the icons stay on the same vertical as the avatar above, centred in the column (Daria, 27.09) */
+/* folding: the width eases, labels fade and get clipped, icons stay put (a small nudge to the centre) — nothing
+   snaps or jumps (Daria, 27.09) */
+.app__side .ag-nav-item { overflow: hidden; white-space: nowrap; transition-property: background-color, color, padding; transition-duration: var(--dur-1), var(--dur-1), var(--dur-layout); transition-timing-function: var(--ease-std), var(--ease-std), var(--ease-layout); }
+.app__side .nav-label, .app__side .ag-nav-item .nav-count, .app__side .ag-nav-item__chev { transition: opacity var(--dur-2) var(--ease-std); }
+.side-collapsed .app__side :is(.nav-label, .ag-nav-item .nav-count, .ag-nav-item__chev) { opacity: 0; }
+.side-collapsed .app__side .ag-nav-item.is-here { background: var(--sidebar-accent); }
+/* a group's items fold to nothing and back (also when the whole column folds) */
+.app__side .ag-nav-sub { display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--dur-3) var(--ease-layout), opacity var(--dur-2) var(--ease-std), padding var(--dur-3) var(--ease-layout); }
+.app__side .ag-nav-sub__in { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
+.app__side .ag-nav-sub.is-shut, .side-collapsed .app__side .ag-nav-sub { grid-template-rows: 0fr; opacity: 0; padding-top: 0; padding-bottom: 0; }
+.app__side .ag-nav-item[aria-expanded="true"] .nav-count { display: none; }   /* an open group shows counts on its items */
+.side-collapsed .panel--left { width: 64px; }
+.app__side .ag-nav-item { text-decoration: none; }
+.app__side .ag-nav-sub a { cursor: pointer; }
+.app__side button.ag-nav-item { text-align: left; }
+.app__side .ag-nav-item__chev { transition: transform var(--dur-2) var(--ease-std), opacity var(--dur-2) var(--ease-std); }
+.app__side .ag-nav-item[aria-expanded="false"] .ag-nav-item__chev { transform: rotate(-90deg); }
+.app__side .nav-count + .ag-nav-item__chev { margin-left: 4px; }
+.app__main { flex: 1; min-width: 0; background: var(--color-bg-secondary); }
+.app--fixed .app__main { overflow: auto; }   /* fixed-height layout: each column scrolls on its own, so the chat keeps its input in place */
+/* one gap between blocks, the same across and down (Daria, 28.09): 16, as between the cards. The heading sits on the line the
+   sidebar's first item and Newton's name sit on — 31px under the top of the windows (19 + 24/2) */
+.page { max-width: 1240px; margin: 0 auto; padding: 19px 32px 40px; display: flex; flex-direction: column; gap: 16px; container: page / inline-size; }
+.page > .page__head { margin-bottom: 8px; }
+.page__head { display: flex; align-items: flex-end; gap: 12px; }
+.page__head > div { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.section-title { display: flex; align-items: baseline; gap: 8px; font: 600 16px/22px var(--font-sans); }
+.section-title span { font: 400 14px/20px var(--font-sans); color: var(--color-text-tertiary); }
+.nav-count { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--radius-md); background: var(--color-fg-brand-tertiary); color: var(--color-text-brand-primary); font: 600 12px/16px var(--font-sans); text-align: center; }
+
+/* ---------- launch cards & review block (Home) ---------- */
+.launch-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; }
+.launch { display: flex; align-items: center; gap: 20px; padding: 20px 24px; }
+.launch__ring > span { font: 600 14px/20px var(--font-sans); color: var(--color-text-primary); }
+.launch__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.launch__title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.launch__actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+
+.review { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); gap: 24px; padding: 28px; border-radius: var(--radius-2xl1);
+  background: var(--rv-bg, var(--color-bg-secondary)); overflow: hidden; }   /* the game's colour, flat (Daria, 28.09; was the kit's blue-pink gradient) */
+.review--dark .review__title, .review--dark .review__list { color: var(--rv-fg); }
+.review--dark .review__head p { color: var(--rv-fg); opacity: .72; }
+.review__info { display: flex; flex-direction: column; gap: 16px; }
+.review__info { gap: 24px; }
+.review__head { display: flex; flex-direction: column; gap: 6px; }
+.review__title { margin: 0; color: var(--color-text-primary); }   /* the kit's title, a step under the page's heading — one family of type on Home (Daria, 28.09) */
+.review__head p { font: 400 14px/20px var(--font-sans); color: var(--color-text-secondary-hover); }   /* fewer sizes (Daria, 28.09): 44 · 28 · 14 */
+/* what's on the hub: a list set like a card's number (Daria, 28.09) — the figure 28 bold, the word 12 semibold, on one baseline */
+.review__list { margin: auto 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: max-content max-content; column-gap: 8px; row-gap: 4px; align-items: baseline; color: var(--color-text-primary); }   /* down at the banner's bottom (Daria, 28.09) */
+.review__list li { display: contents; }
+.review__list b { font: 700 28px/32px var(--font-sans); letter-spacing: -.02em; text-align: right; }   /* figures to the right, words to the left: one clean line between them */
+.review__list span { font: 600 12px/16px var(--font-sans); }
+.made { display: flex; flex-direction: column; gap: 8px; }
+.made__label { font: 500 12px/16px var(--font-sans); color: var(--color-text-secondary-hover); display: inline-flex; align-items: center; gap: 6px; }
+.made__item { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 12px; border-radius: var(--radius-xl); background: var(--color-fg-primary); box-shadow: var(--shadow-xs); text-decoration: none; font: 500 14px/20px var(--font-sans); color: var(--color-text-primary); }
+.made__item:hover { box-shadow: var(--shadow-md); }
+.made__item > span { flex: 1; }
+.made__item > svg:last-child { width: 16px; height: 16px; color: var(--color-text-quarterary-hover); }
+.review__actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.review__actions .ag-hint { width: 100%; color: var(--color-text-secondary-hover); }
+.review__stage { position: relative; display: grid; place-items: end center; padding: 8px 88px 0 0; min-height: 0; align-self: end; overflow: hidden; }
+/* the hub rises from the banner's bottom edge (Daria, 28.09): the laptop ends at its screen, the phone is cut by the same edge */
+.review { padding-bottom: 0; }
+.review__info { padding-bottom: 28px; }
+.review .laptop__base { display: none; }
+.review .phone { bottom: -40px; }
+.review__stage .phone { right: 0; width: 128px; }   /* the Newton panel narrows this column: keep the phone inside and off the laptop */
+.review__stage .laptop { width: 100%; max-width: 620px; }
+/* the device frames are back (Daria, 28.09) */
+
+/* ---------- devices (illustration frames) ---------- */
+.laptop { position: relative; }
+.laptop__screen { padding: 8px 8px 10px; border-radius: 14px 14px 0 0; background: var(--foreground); box-shadow: var(--shadow-xl); }
+.laptop__screen > .hubmini { aspect-ratio: 16 / 10; overflow: hidden; }   /* a laptop screen, not a letterbox */
+.laptop__base { height: 12px; margin: 0 -6%; border-radius: 0 0 12px 12px; background: var(--color-fg-tertiary); box-shadow: var(--shadow-md); }
+.phone { position: absolute; right: -28px; bottom: -8px; width: 168px; padding: 5px; border-radius: 22px; background: var(--foreground); box-shadow: var(--shadow-xl); }
+.phone .hubmini { border-radius: 17px; aspect-ratio: 9 / 19; overflow: hidden; }
+
+/* ---------- mini hub preview = the customer's game theme (raw colors allowed) ---------- */
+/* the mock-up's screen: the real hub is scaled into it (the dark while it loads is the game's, not the kit's) */
+.hubmini { position: relative; background: #1B1531; border-radius: 6px; overflow: hidden; }
+.hubmini > .hubprev { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; pointer-events: none; }   /* the real hub, scaled into the mock-up */
+.part { transition: opacity .4s, transform .4s; }
+.building .part:not(.is-in) { background: rgba(255, 255, 255, .06); animation: ag-pulse 1.6s ease-in-out infinite; }
+.building .part:not(.is-in) > * { visibility: hidden; }
+.building .part.is-in { animation: part-in .45s ease-out; }
+@keyframes part-in { from { opacity: 0; transform: translateY(4px); } }
+
+/* ---------- modals & drawer ---------- */
+.ag-backdrop { z-index: 50; }
+.modal-wide { max-width: 640px; max-height: calc(100vh - 32px); display: flex; flex-direction: column; }
+.modal-wide .ag-modal__body { overflow: auto; }
+.mhead { display: flex; align-items: flex-start; gap: 12px; }
+.mhead .ag-modal__title { flex: 1; }
+.ag-modal__head > p { margin-top: 6px; }
+.ag-modal__foot .ag-hint { max-width: 260px; }
+.steps { list-style: none; margin: 16px 0 6px; padding: 0; display: flex; gap: 6px; }
+.steps li { flex: 1; display: flex; flex-direction: column; gap: 6px; font: 500 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+.steps li::before { content: ""; height: 4px; border-radius: 9999px; background: var(--color-fg-secondary-alt); }
+.steps li.is-active { color: var(--color-text-primary); } .steps li.is-active::before { background: var(--color-fg-brand-primary); }
+.steps li.is-done { color: var(--color-text-secondary); } .steps li.is-done::before { background: var(--color-fg-success-solid); }
+.steps li small { font: 400 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+.nf { position: relative; display: flex; align-items: center; }
+.nf .ag-input { padding-right: 34px; }
+.nf .ai-ico { position: absolute; right: 12px; }
+.logo-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: var(--radius-md); border: 1px solid var(--color-border-primary); box-shadow: var(--shadow-xs); }
+.logo-row > span:nth-child(2) { flex: 1; font: 400 14px/20px var(--font-sans); color: var(--color-text-secondary); }
+.sec { display: flex; flex-direction: column; gap: 8px; }
+.sec__title { font: 600 14px/20px var(--font-sans); color: var(--color-text-primary); }
+.code { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 6px 6px 12px; border-radius: var(--radius-md); background: var(--color-fg-secondary); }
+.code code { flex: 1; font: 400 12px/16px var(--font-mono); color: var(--color-text-primary); }
+.code > span { font: 500 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+.checks { display: flex; flex-direction: column; gap: 12px; }
+.crow { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--color-border-secondary); }
+.crow:last-child { border-bottom: 0; }
+.crow__st { width: 20px; height: 20px; display: grid; place-items: center; flex-shrink: 0; }
+.crow__st .dot, .gen-row__st .dot { width: 8px; height: 8px; border-radius: 9999px; background: var(--color-fg-tertiary); }
+.crow__st .dot { animation: ag-pulse 1.6s ease-in-out infinite; }
+.crow__st svg { width: 20px; height: 20px; color: var(--color-text-success-primary); }
+.crow__txt { flex: 1; min-width: 0; }
+.crow__txt b { display: block; font: 500 14px/20px var(--font-sans); color: var(--color-text-primary); }
+.crow__txt span { font: 400 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+.crow__status { font: 500 12px/16px var(--font-sans); color: var(--color-text-tertiary); white-space: nowrap; }
+.crow.is-ok .crow__status { color: var(--color-text-success-primary); }
+
+.drawer-bg { position: fixed; inset: 0; z-index: 50; background: var(--color-overlay-modal); display: flex; justify-content: flex-end; }
+.drawer { width: 440px; max-width: 100%; height: 100%; background: var(--color-fg-primary); box-shadow: var(--shadow-xl); display: flex; flex-direction: column; }
+.drawer__head { padding: 24px 24px 8px; display: flex; flex-direction: column; gap: 6px; }
+.drawer__body { flex: 1; overflow: auto; padding: 12px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+.drawer__foot { display: flex; align-items: center; gap: 8px; padding: 16px 24px; border-top: 1px solid var(--color-border-secondary); }
+
+.toast-wrap { position: fixed; right: 16px; bottom: 16px; z-index: 70; }
+
+/* ---------- tables ---------- */
+.table-card { border: 1px solid var(--color-border-secondary); border-radius: var(--radius-xl); overflow: hidden; background: var(--color-fg-primary); }
+.table-card .ag-table td, .table-card .ag-table th { padding-left: 16px; }
+.ag-table tr.is-sel td { background: var(--color-fg-brand-tertiary); }
+.ag-table tr.is-click { cursor: pointer; }
+.ag-table .col-check { width: 44px; }
+.row-check { width: 16px; height: 16px; accent-color: var(--color-fg-brand-primary); }
+.sel-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--radius-xl); background: var(--color-fg-brand-tertiary); font: 600 14px/20px var(--font-sans); color: var(--color-text-brand-solid); }
+.sel-bar > span { flex: 1; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter { height: 32px; padding: 0 12px; border-radius: var(--radius-md); border: 1px solid var(--color-border-primary); background: var(--color-fg-primary); font: 500 14px/20px var(--font-sans); color: var(--color-text-tertiary); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.filter:hover { color: var(--color-text-primary); }
+.filter.is-active { border-color: var(--color-border-brand); color: var(--color-text-primary); box-shadow: var(--ring-brand-1); }
+
+/* ---------- side panels (Hub, Localization, Settings, Company) ---------- */
+.panel { background: var(--sidebar); display: flex; flex-direction: column; min-height: 0; overflow: auto; }
+.panel--left { width: var(--app-sidebar-width); flex-shrink: 0; border-right: 1px solid var(--sidebar-border); transition: width var(--dur-layout) var(--ease-layout); overflow-x: hidden; }
+.panel--right { width: 300px; flex-shrink: 0; border-left: 1px solid var(--sidebar-border); padding: 16px; gap: 16px; }
+.panel__block { display: flex; flex-direction: column; gap: 8px; }
+.panel__title { font: 600 16px/22px var(--font-sans); color: var(--color-text-primary); }
+.panel__label { font: 600 12px/16px var(--font-sans); color: var(--color-text-secondary); }
+.seg { display: flex; gap: 2px; padding: 3px; border-radius: var(--radius-lg); background: var(--sidebar-accent); }
+.seg button { flex: 1; height: 28px; border: 0; border-radius: var(--radius-md); background: transparent; font: 500 14px/20px var(--font-sans); color: var(--color-text-tertiary); cursor: pointer; }
+.seg button.is-active { background: var(--color-fg-primary); color: var(--color-text-primary); box-shadow: var(--shadow-xs); }
+.kv { display: flex; justify-content: space-between; gap: 12px; font: 400 14px/20px var(--font-sans); }
+.kv span:last-child { color: var(--color-text-secondary); text-align: right; }
+
+/* ---------- Newton split panel (adaptive width — shared mechanic, see handoff 6.x) ---------- */
+/* Not user-resizable: JS sets data-nw per context; content differs per state, it doesn't just squish. */
+.app__chat { flex-shrink: 0; display: flex; min-height: 0; border-radius: var(--radius-xl); background: var(--color-bg-secondary); transition: flex-basis var(--dur-layout) var(--ease-layout); overflow: hidden; overflow: clip; }   /* clip: the waves behind the chat reach past it — nothing may scroll it sideways
+/* clamp(), not a fixed px — within one state it still gives a little on browser resize; only the state itself is system-controlled */
+.app__chat[data-nw="wide"] { flex-basis: clamp(360px, 34vw, 480px); }
+.app__chat[data-nw="moderate"] { flex-basis: clamp(280px, 24vw, var(--newton-sidebar-width)); }
+.app__chat[data-nw="minimal"] { flex-basis: 72px; }
+/* two-thirds / full: Newton becomes the main workspace (Figma — the generation screen).
+   two-thirds = content 1/3, Newton 2/3, exactly as drawn (Daria, 26.09 — replaced the earlier 50/50 "half"). */
+/* shares are of the room left after the 16px gap between the windows, so 1/2 and 2/3 stay exact */
+.app__chat[data-nw="two-thirds"] { flex-basis: calc((100% - var(--split-gap)) * 2 / 3); }
+/* half — Newton does a task and its result lands on the page next to it: both need the room (Daria, 26.09) */
+.app__chat[data-nw="half"] { flex-basis: calc((100% - var(--split-gap)) / 2); }
+.app__chat[data-nw="full"] { flex-basis: calc((100% - var(--split-gap)) * .85); }
+/* solo — the start of onboarding: there is no dashboard yet, so there is nothing to split with.
+   A thin strip of the canvas stays on the left, 72px — as wide as minimal's rail on the right (Daria, 27.09, back again):
+   on "Show me the magic" Newton narrows and the strip opens into the build, the same eased move as everywhere. */
+.app__chat[data-nw="solo"] { flex-basis: 100%; }   /* no strip on the left before the build (UX answers 28.09): Newton alone; the build opens on "Show me the magic" */
+/* solo: there is no dashboard yet — no sidebar. two-thirds / full: the sidebar doesn't vanish, it folds to icons
+   (app.js, side-collapsed), so you always see where you are (Daria, 26.09) */
+.app__body:has(.app__chat[data-nw="solo"]) .app__side { display: none; }
+/* full on a page with a sidebar (the Dashboard; Hub's page list too): the page doesn't shrink to a crushed strip — it steps
+   aside completely and Newton takes the workspace; the folded sidebar still shows where you are (Daria, 26.09) */
+/* On the Dashboard it slides aside rather than vanishing (27.09): Newton's width eases up to everything but the folded
+   menu, the page fades out as it narrows to nothing — no jump. */
+.app__body:has(.app__side) .app__chat[data-nw="full"] { flex-basis: calc(100% - 50px - var(--split-gap)); }
+.app__body:has(.app__side) .app__main { transition: opacity var(--dur-2) var(--ease-std); }
+.app__body:has(.app__side):has(.app__chat[data-nw="full"]) .app__main { opacity: 0; pointer-events: none; }
+.app__body:has(.panel--left):has(.app__chat[data-nw="full"]) .hub-center { display: none; }
+.app__body:has(.panel--left) .app__chat[data-nw="full"] { flex: 1 1 auto; }
+.app__body:has(.panel--left):has(.app__chat[data-nw="full"]) .app__pane { flex: 0 0 auto; }   /* the left window hugs the folded menu */
+/* generic rail for whatever .app__main holds — see app.js boot, which injects .app-rail next to it on every page */
+.app-rail { display: none; }
+.app__body:has(.app__chat[data-nw="solo"]) .app__main { display: none; }
+.app__body:has(.app__chat[data-nw="solo"]) .app-rail { display: flex; flex: 0 0 0; min-width: 0; margin-right: calc(var(--split-gap) * -1); overflow: hidden; background: var(--color-fg-secondary-alt); }   /* the canvas's own colour (the build's ground), nothing in it */
+.app-rail svg { display: none; }
+.nw-chat__rail { display: none; width: 100%; border: 0; background: none; cursor: pointer; flex-direction: column; align-items: center; gap: 8px; padding: 20px 0; }
+.nw-chat__rail .ai-ico { width: 20px; height: 20px; }
+.nw-chat__rail b { font: 600 12px/16px var(--font-sans); color: var(--color-text-primary); }
+.nw-chat__rail span { writing-mode: vertical-rl; font: 500 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+.app__chat[data-nw="minimal"] .nw-chat__rail { display: flex; }
+.app__chat[data-nw="minimal"] .nw-chat__full { display: none; }
+.nw-chat__full { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+.nw-chat__head { display: flex; align-items: center; gap: 8px; padding: 17px 16px 22px; flex-shrink: 0; }   /* "Newton" on the heading's line: 17 + 28/2 = 31; the chat's first block on the page's first cards: 17 + 28 + 22 = 67 = 19 + 24 + 8 + 16 (Daria, 28.09) */
+.nw-chat__head b { font: 600 22px/28px var(--font-sans); letter-spacing: -.01em; color: var(--color-text-primary); }   /* bigger (Daria, 28.09) */
+.nw-chat__head > .ai-ico { width: 18px; height: 18px; }
+/* the top of the conversation (Daria, 27.09): Newton's soft glow from the first screen of onboarding sits behind his name,
+   and the conversation scrolls away under it — the earlier messages melt into the glow, so it's clear there's more above.
+   The strips and alerts on top stay over it (they're the chat's own sticky top). Not in solo (it has its own glow) or the rail. */
+.app__chat:not([data-nw="solo"]):not([data-nw="minimal"]) .nw-chat__full { position: relative; }
+.app__chat.nw-glow:not([data-nw="solo"]):not([data-nw="minimal"]) .nw-chat__full::before {   /* hidden for now (Daria, 27.09: "not pretty yet, I'll think") — add class nw-glow to the panel to bring it back */ content: ""; position: absolute; left: 0; right: 0; top: 0; height: 128px; z-index: 2;
+  pointer-events: none; border-radius: inherit;
+  background: radial-gradient(40% 95% at 30% 0%, var(--color-fg-violet-secondary), transparent 75%),
+              radial-gradient(38% 90% at 68% 4%, var(--color-fg-brand-secondary), transparent 75%),
+              radial-gradient(30% 70% at 92% 0%, var(--color-fg-pink-secondary), transparent 75%), var(--color-bg-secondary);
+  background-size: 120% 100%; -webkit-mask-image: linear-gradient(to bottom, black 0 48%, transparent 100%); mask-image: linear-gradient(to bottom, black 0 48%, transparent 100%);
+  animation: nw-glow 14s ease-in-out infinite alternate; }
+@keyframes nw-glow { to { background-position: 100% 0; } }
+@media (prefers-reduced-motion: reduce) { .app__chat .nw-chat__full::before { animation: none; } }
+.nw-chat__head { position: relative; z-index: 3; }
+/* the chat's background — the aurora as waves (Daria, 28.09, her sketch): the light starts off the panel, beyond its top-left
+   corner, and rolls across it diagonally in wide soft rings towards the bottom right, three colours once each — so the top and the edges are never
+   left white. The rings move outwards slowly. Was: pale blots at the top (Daria: "not pretty"). Class nw-aurora on the panel
+   turns it on; still for those without motion. */
+@property --nw-wave { syntax: '<length>'; inherits: false; initial-value: 0px; }
+.app__chat:not([data-nw="solo"]):not([data-nw="minimal"]) .nw-chat__full { position: relative; }
+.app__chat.nw-aurora:not([data-nw="solo"]):not([data-nw="minimal"]) .nw-chat__full::after { content: ""; position: absolute; inset: -48px; z-index: 0; pointer-events: none;
+  /* three colours, each once — not a rainbow (Daria, 28.09): violet from the corner, then blue, then pink, then nothing */
+  background: radial-gradient(circle at 0 0, var(--color-fg-violet-secondary) var(--nw-wave), var(--color-fg-brand-secondary) calc(30% + var(--nw-wave)),
+    var(--color-fg-pink-secondary) calc(58% + var(--nw-wave)), transparent calc(88% + var(--nw-wave)));
+  filter: blur(18px); opacity: .3;   /* half as strong (Daria, 28.09) */   /* inset -48: the blur's soft edge falls outside the panel, not a white rim inside it */
+  -webkit-mask-image: linear-gradient(to bottom right, black 30%, transparent 92%); mask-image: linear-gradient(to bottom right, black 30%, transparent 92%);
+  animation: nw-waves 14s ease-in-out infinite alternate; }   /* the rings roll out a little and back, slowly */
+@keyframes nw-waves { from { --nw-wave: -80px; } to { --nw-wave: 80px; } }
+@media (prefers-reduced-motion: reduce) { .app__chat .nw-chat__full::after { animation: none; } }
+.nw-chat__body, .nw-chat__foot { position: relative; z-index: 1; }
+.nw-chat__full .chat__top { z-index: 3; }   /* "Newton" then his spark (Daria, 26.09) */
+.nw-chat__head [data-nw-collapse] { margin-left: auto; }
+.nw-chat__head [data-nw-collapse] { display: inline-flex; width: 16px; height: 16px; border: 0; padding: 0; background: none; color: var(--color-text-tertiary); cursor: pointer; transform: rotate(90deg); flex-shrink: 0; }
+.nw-chat__head [data-nw-collapse] svg { width: 16px; height: 16px; }
+.nw-chat__body { flex: 1; min-height: 0; overflow: auto; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.nw-chat__body p { font: 400 14px/20px var(--font-sans); color: var(--color-text-secondary); }
+.nw-chat__foot { flex-shrink: 0; padding: 0 16px 16px; }
+/* wide states: the conversation keeps a readable column instead of stretching across the whole pane */
+.nw-col { width: 100%; max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+/* Newton's earlier turns stay visible but step back, so the current one reads first */
+.nw-turn { display: flex; flex-direction: column; gap: 10px; }
+.nw-turn + .nw-turn { margin-top: 8px; }
+.nw-you { align-self: flex-end; max-width: 80%; padding: 8px 14px; border-radius: var(--radius-xl); background: var(--color-fg-primary); border: 1px solid var(--color-border-secondary); font: 400 14px/20px var(--font-sans); color: var(--color-text-primary); }
+.app__chat[data-nw="solo"] .nw-chat__body, .app__chat[data-nw="full"] .nw-chat__body, .app__chat[data-nw="two-thirds"] .nw-chat__body { padding: 0 24px 16px; }
+.app__chat[data-nw="solo"] .nw-chat__foot, .app__chat[data-nw="full"] .nw-chat__foot, .app__chat[data-nw="two-thirds"] .nw-chat__foot { padding: 0 24px 16px; }
+.app__chat[data-nw="full"] .nw-chat__head, .app__chat[data-nw="two-thirds"] .nw-chat__head { padding: 24px 24px 16px; }   /* the same 24 as the left window beside it */
+.app__chat[data-nw="solo"] .nw-chat__head { display: none; }
+.app__chat[data-nw="solo"] .nw-chat__body > .nw-col { margin: auto; padding: 24px 0; }
+
+/* ---------- ask Newton line (onboarding; in the product you ask Newton only in his panel, 26.09) ---------- */
+.ask { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 8px 6px 16px; border-radius: var(--radius-xl); border: 1px solid var(--color-border-primary); background: var(--color-fg-primary); box-shadow: var(--shadow-md); position: sticky; bottom: 16px; }
+.ask input { flex: 1; height: 40px; min-width: 0; border: 0; outline: none; background: transparent; font: 400 14px/20px var(--font-sans); color: var(--color-text-primary); }
+.nw-chat__foot .ask { position: static; }
+
+/* the hub block: side by side only when the page has room for a real laptop; otherwise the hub goes under the list */
+@container page (max-width: 960px) {
+  .review { grid-template-columns: 1fr; }
+  .review__stage { padding: 8px 72px 0 0; }
+  .review__stage .laptop { max-width: 560px; }
+  .made { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .made__label { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) {
+  .app__side, .panel--left, .panel--right, .app__chat { display: none; }
+  .switch { width: auto; }
+  .page { padding: 24px 16px; }
+}
+
+/* ---------- onboarding: Newton leads the whole flow (Figma 131:1842) ---------- */
+/* Screens 1–2 are Newton alone (data-nw="solo"); from the generation screen on, the dashboard
+   slides in on the left and Newton settles at two-thirds, then minimal on the hub reveal. */
+.ob-body { background: var(--color-bg-secondary); }
+.ob-main { overflow: auto; display: flex; flex-direction: column; }
+.ob-pane { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 32px 24px; text-align: center;
+  animation: ob-fade .5s ease .12s both; }
+@keyframes ob-fade { from { opacity: 0; } }
+.ob-pane__list { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.ob-pane__txt { display: flex; flex-direction: column; gap: 4px; align-items: center; max-width: 560px; }
+.ob-done-mark { width: 64px; height: 64px; color: var(--color-text-success-primary); }
+.ob-hello { display: flex; flex-direction: column; gap: 8px; text-align: center; padding-bottom: 4px; }
+.ob-found { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--radius-xl); border: 1px solid var(--color-border-secondary); background: var(--color-fg-primary); text-align: left; }
+.ob-found__txt { flex: 1; display: flex; flex-direction: column; }
+.ob-found__txt b { font: 600 14px/20px var(--font-sans); color: var(--color-text-primary); }
+.ob-found__txt span { font: 400 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+.ob-cta { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 4px; }
+.nw-turn .ask { position: static; }   /* inside the conversation it is a message, not a sticky bar */
+
+/* style tags: Newton pre-picks from the store page, one click changes his mind (see handoff 8).
+   Picked tags are colour-coded — each style keeps its own kit colour, so the choice reads at a glance. */
+.tagcloud { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; padding: 6px 0; }
+/* style tags in two groups, like Hub → Styles (onboarding, 27.09): kit section labels, one left edge */
+.ob-tags { display: flex; flex-direction: column; gap: 8px; }
+.ob-tags .tagcloud { justify-content: flex-start; padding: 0; }
+.ob-tags .tagcloud + .text-section-label { margin-top: 8px; }
+.tag { position: relative; display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 9999px; border: 1px solid var(--color-border-primary); background: var(--color-fg-primary); color: var(--color-text-secondary); font: 500 14px/20px var(--font-sans); cursor: pointer; transition: transform .12s ease, box-shadow .12s ease; }
+.tag:hover { border-color: var(--color-border-primary-hover); color: var(--color-text-primary); }
+.tag.is-on { border-color: transparent; font-weight: 600; box-shadow: var(--shadow-xs); }
+/* picked: a cross after the name (Daria, 27.09) — it's on, a tap takes it off */
+.tag.is-on::after { content: ""; width: 12px; height: 12px; margin: 0 -2px 0 6px; flex-shrink: 0; background: currentColor; opacity: .8;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18 6 6 18M6 6l12 12' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18 6 6 18M6 6l12 12' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+.tag--more { border-style: dashed; color: var(--color-text-tertiary); }
+/* Newton's mark sits on the tag like a sticker, not inside the label. White disc, so it stays
+   readable on every tag colour — including the black one. */
+.tag__nw { position: absolute; top: -8px; right: -7px; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 9999px;
+  background: var(--color-fg-primary); box-shadow: var(--shadow-md); }
+.tag__nw .ai-ico { width: 14px; height: 14px; color: var(--ai-accent); }
+/* Picked tags carry the kit's bright badge colours (same pairs .ag-badge--pink / --blue use: the 300 level with 900 text) */
+.tag--blue.is-on { background: var(--color-sky-300); color: var(--color-text-brand-solid); }
+.tag--pink.is-on { background: var(--color-fg-pink-primary); color: var(--color-text-pink-solid); }
+.tag--violet.is-on { background: var(--color-violet-300); color: var(--color-text-violet-solid); }
+.tag--orange.is-on { background: var(--color-fg-warning-primary); color: var(--color-text-warning-solid); }
+.tag--green.is-on { background: var(--color-fg-success-primary); color: var(--color-text-success-solid); }
+.tag--lime.is-on { background: var(--color-lime-300); color: var(--color-text-lime-solid); }
+.tag--red.is-on { background: var(--color-red-300); color: var(--color-text-error-solid); }
+.tag--gray.is-on { background: var(--color-slate-300); color: var(--color-text-primary); }
+.tag--dark.is-on { background: var(--foreground); color: var(--color-text-inverse); }
+
+/* the first screen as a process (Daria, 27.09): a link → the look-up → the game → the look → Build it.
+   Groups are split by space, each part comes in once (.ob-in) */
+.ob-col { gap: 0; }
+/* anchored at the top, not centred: each new part comes in below, nothing above it jumps */
+/* centred on the screen at the start; as parts come in, it rises smoothly to keep the whole thing centred (padding-top set in
+   Onboarding.html, eased) — nothing jumps (Daria, 27.09) */
+.app__chat[data-nw="solo"] .nw-chat__body > .nw-col.ob-col { margin: 0 auto; padding-top: 30vh; transition: padding-top var(--dur-layout) var(--ease-layout); }
+/* a soft light glow in Newton's colours around the field — the eye goes there (Daria, 27.09, after Gemini and Lovable) */
+.app__chat[data-nw="solo"] { position: relative; background: var(--color-bg-secondary); }
+.app__chat[data-nw="solo"]::before { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: radial-gradient(40% 36% at 45% 50%, color-mix(in srgb, var(--color-fg-brand-secondary) 80%, transparent), transparent 72%),
+              radial-gradient(32% 32% at 60% 58%, color-mix(in srgb, var(--color-fg-pink-secondary) 65%, transparent), transparent 72%),
+              radial-gradient(50% 45% at 50% 50%, color-mix(in srgb, var(--color-fg-brand-tertiary) 70%, transparent), transparent 80%);
+  animation: ob-breathe 12s ease-in-out infinite alternate; }
+.app__chat[data-nw="solo"] > * { position: relative; }
+@keyframes ob-breathe { to { scale: 1.08; translate: 0 -2%; } }
+@media (prefers-reduced-motion: reduce) { .app__chat[data-nw="solo"]::before { animation: none; } }
+.ob-col .ob-hello { padding-bottom: 28px; text-align: left; align-items: flex-start; }
+.ob-col .ob-hello .ag-badge { align-self: flex-start; }
+.ob-hello__p { display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); }
+.ob-hello__p .ag-spinner { width: 14px; height: 14px; color: var(--color-fg-brand-primary); }
+.ob-hello__p.is-busy span:last-child { background: linear-gradient(90deg, var(--color-text-secondary) 0 40%, var(--ai-accent) 50%, var(--color-text-secondary) 60% 100%); background-size: 240% 100%;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: ob-shine 1.8s linear infinite; }
+.ob-start { gap: 0; }
+.ob-link { display: flex; align-items: center; gap: 10px; height: 64px; padding: 0 10px 0 24px; border-radius: var(--radius-xl); border: 1px solid var(--color-border-primary);
+  background: var(--color-fg-primary); box-shadow: var(--shadow-lg); transition: box-shadow var(--dur-2) var(--ease-std), border-color var(--dur-2) var(--ease-std); }
+.ob-link:focus-within { border-color: var(--color-border-brand); }
+.ob-link input { flex: 1; min-width: 0; height: 44px; border: 0; outline: none; background: none; font: 400 16px/24px var(--font-sans); color: var(--color-text-primary); }
+.ob-link input::placeholder { color: var(--color-text-quarterary-hover); }
+.ob-link__go { width: 44px; height: 44px; flex-shrink: 0; display: grid; place-items: center; border: 0; border-radius: var(--radius-lg); background: var(--color-fg-secondary-alt);
+  color: var(--color-text-inverse); cursor: pointer; transition: background-color var(--dur-2) var(--ease-std); }
+.ob-link__go svg { width: 18px; height: 18px; }
+.ob-link.has-text .ob-link__go { background: var(--foreground); }
+.ob-link.is-set { box-shadow: var(--shadow-xs); background: var(--color-fg-secondary); }
+/* the link shows with a quick soft wipe, left to right (Daria, 27.09) */
+.ob-link.is-pasting input { animation: ob-wipe .5s var(--ease-out) both; }
+@keyframes ob-wipe { from { clip-path: inset(0 100% 0 0); opacity: .4; } to { clip-path: inset(0 0 0 0); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ob-link.is-pasting input { animation: none; } }
+.ob-link.is-set input { color: var(--color-text-secondary); }
+.ob-found__x { width: 28px; height: 28px; flex-shrink: 0; display: grid; place-items: center; margin-left: 4px; border: 0; border-radius: var(--radius-md); background: none; color: var(--color-text-tertiary); cursor: pointer; }
+.ob-found__x svg { width: 16px; height: 16px; }
+.ob-found__ok { gap: 4px; }
+.ob-found__ok svg { width: 12px; height: 12px; }
+.ob-found__x:hover { background: var(--color-fg-secondary); color: var(--color-text-primary); }
+.ob-go { gap: 10px; padding: 0 28px 0 24px; border-radius: var(--radius-lg); font: 600 16px/20px var(--font-sans); }
+.ob-go svg { width: 18px; height: 18px; }
+.ob-status { display: flex; align-items: center; gap: 10px; margin-top: 16px; font: 500 14px/20px var(--font-sans); color: var(--color-text-secondary); }
+.ob-status .ag-spinner { color: var(--color-fg-brand-primary); }
+.ob-found-wrap { margin-top: 16px; }
+.ob-found-wrap .ob-found { position: relative; }
+.ob-think { display: flex; align-items: center; gap: 8px; margin-top: 32px; font: 500 14px/20px var(--font-sans); }
+.ob-think span { background: linear-gradient(90deg, var(--color-text-tertiary) 0 40%, var(--ai-accent) 50%, var(--color-text-tertiary) 60% 100%); background-size: 240% 100%;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: ob-shine 1.8s linear infinite; }
+@keyframes ob-shine { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+.ob-look { display: flex; flex-direction: column; gap: 14px; margin-top: 32px; }
+.ob-look .tagcloud { justify-content: flex-start; padding: 0; }
+.ob-more { animation: mo-page-in var(--dur-3) var(--ease-out) both; }
+.ob-cta { margin-top: 32px; align-items: stretch; }
+.ob-cta .ob-go { width: 100%; justify-content: center; }
+/* entrances: once each */
+.ob-in { animation: mo-page-in var(--dur-3) var(--ease-out) both; }
+.ob-pop { animation: ob-pop .42s cubic-bezier(.2, 1.3, .4, 1) calc(.15s + var(--i) * 90ms) both; }
+@keyframes ob-pop { from { opacity: 0; scale: .7; } }
+.ob-cta.ob-in { animation: mo-page-in var(--dur-3) var(--ease-out) .7s both; }
+@media (prefers-reduced-motion: reduce) { .ob-in, .ob-pop, .ob-more, .ob-think span { animation: none; } }
+
+/* the build (left third): the hub shows up under a sweeping line; the work, counted, fills in under it */
+.ob-build { --p: 0; position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 20px; padding: 24px; background: var(--color-fg-secondary-alt); overflow: auto; animation: ob-fade .5s ease .12s both; }
+.ob-build h1 { position: relative; }
+/* the build is a banner that draws people in (Daria, 27.09): a big heavy heading; "ready" in Newton's colours */
+.ob-build__title { margin: 0; font: 700 44px/48px var(--font-sans); letter-spacing: -.025em; color: var(--color-text-primary); }
+/* "ready" in the same solid dark as "building" (Daria, 27.09: the gradient read too playful) */
+/* the side of the build: the path, and the big way on under it once the hub is ready */
+/* "See my hub" right after the heading, on its line, 24px at the sides (Daria, 27.09) */
+.ob-build__head { grid-column: 1 / -1; display: flex; align-items: center; gap: 24px; margin-bottom: 16px; }
+.ob-build__go { flex-shrink: 0; padding: 0 24px; opacity: 0; translate: 0 8px; pointer-events: none; transition: opacity var(--dur-3) var(--ease-std) .3s, translate var(--dur-3) var(--ease-out) .3s; }
+.ob-build.is-done .ob-build__go { opacity: 1; translate: 0 0; pointer-events: auto; }
+
+.ob-build__t1, .ob-build__t2 { display: block; transition: opacity var(--dur-3) var(--ease-std), translate var(--dur-3) var(--ease-out); }
+.ob-build__t2 { position: absolute; left: 0; top: 0; opacity: 0; translate: 0 8px; }
+.ob-build.is-done .ob-build__t1 { opacity: 0; translate: 0 -6px; }
+.ob-build.is-done .ob-build__t2 { opacity: 1; translate: 0 0; }
+/* a browser window around the hub: three dots, the hub's address */
+/* heading, preview and list are one group in the middle of the height — the heading sits over the preview's left edge,
+   like the first screen's heading over its field (Daria, 27.09) */
+/* names that say what's counted, numbers only: a narrow list (220px), a wider preview; the list starts at the preview's top */
+.ob-build__group { margin: auto 0; display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 20px 32px; }
+.ob-build__group > .ob-list { align-self: center; }   /* on the preview's middle */
+@media (max-width: 1100px) { .ob-build__group { grid-template-columns: minmax(0, 1fr); } }
+.ob-browser { flex-shrink: 0; border-radius: var(--radius-xl); overflow: hidden; background: var(--color-fg-primary); box-shadow: 0 0 0 1px var(--color-border-secondary), var(--shadow-lg); }
+.ob-browser__bar { display: flex; align-items: center; gap: 12px; height: 32px; padding: 0 12px; }
+.ob-build .ob-browser__bar { background: var(--color-fg-primary); border-bottom: 1px solid var(--color-border-secondary); }   /* light, quiet (Daria, 27.09) */
+/* the prototype's restart: quiet grey text in the bottom-left corner of the build */
+.ob-restart { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 4px 0; border: 0; background: none;
+  font: 500 14px/20px var(--font-sans); color: var(--color-text-tertiary); cursor: pointer; }
+.ob-restart svg { width: 14px; height: 14px; }
+.ob-restart:hover { color: var(--color-text-primary); }
+.ob-browser__dots { display: flex; gap: 6px; }
+.ob-browser__dots i { width: 9px; height: 9px; border-radius: 9999px; background: var(--color-text-quarterary); }   /* grey: they don't look clickable (Daria, 27.09) */
+.ob-browser__url { flex: 1; height: 20px; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--color-fg-secondary);
+  font: 500 12px/1 var(--font-sans); color: var(--color-text-tertiary); }
+.ob-build__shot { position: relative; flex-shrink: 0; aspect-ratio: 16 / 10; overflow: hidden; background: var(--foreground); }
+.ob-build__shot .hubmini { position: absolute; inset: 0; }
+/* the part of the hub not made yet: quiet skeleton rows, the line of Newton's colours on its top edge */
+.ob-build__veil { position: absolute; left: 0; right: 0; bottom: 0; top: calc(var(--p) * 100%); transition: top .9s var(--ease-out);
+  background: repeating-linear-gradient(180deg, transparent 0 18px, var(--color-fg-secondary-alt) 18px 30px) 20px 20px / calc(100% - 40px) 100% no-repeat, var(--color-fg-secondary); }
+.ob-build__veil::before { content: ""; position: absolute; left: 0; right: 0; top: -2px; height: 3px; background: var(--ai-border); box-shadow: 0 0 18px 4px var(--color-fg-pink-secondary); }
+.ob-build.is-done .ob-build__veil::before { opacity: 0; transition: opacity .4s ease .5s; }
+/* the list of what Newton makes, as a path (Daria, 27.09): every step is there from the start, quiet; the one Newton is on
+   comes alive and counts; a done step gets a tick. Nodes on a dotted line; the part already walked is solid. No green. */
+.ob-list { display: flex; flex-direction: column; }
+.ob-row { position: relative; display: flex; align-items: center; gap: 12px; min-height: 34px; }
+.ob-row:not(:last-child)::before { content: ""; position: absolute; left: 9px; top: 26px; bottom: -8px; border-left: 1.5px dashed var(--color-text-quarterary);
+  transition: border-color var(--dur-3) var(--ease-std); }
+.ob-row.is-done:not(:last-child)::before { border-left-style: solid; border-color: var(--color-text-quarterary-hover); }
+.ob-row__st { position: relative; width: 20px; height: 20px; flex-shrink: 0; display: grid; place-items: center; border-radius: 9999px;
+  border: 1.5px solid var(--color-text-quarterary); transition: border-color var(--dur-3) var(--ease-std); }
+.ob-row__st > * { position: absolute; transition: opacity var(--dur-2) var(--ease-std), scale var(--dur-3) var(--ease-out); }
+.ob-row__spin { inset: -1.5px; border-radius: 9999px; border: 1.5px solid transparent; border-top-color: var(--color-text-secondary); border-right-color: var(--color-text-secondary);
+  opacity: 0; animation: ag-spin .9s linear infinite; }
+.ob-row__st svg { width: 12px; height: 12px; color: var(--color-text-secondary); opacity: 0; scale: .4; }
+.ob-row.is-run .ob-row__st { border-color: var(--color-text-quarterary); }
+.ob-row.is-run .ob-row__spin { opacity: 1; }
+.ob-row.is-done .ob-row__st { border-color: var(--color-text-quarterary-hover); }
+.ob-row.is-done .ob-row__st svg { opacity: 1; scale: 1; }
+.ob-row__l { flex: 1; min-width: 0; font: 500 14px/20px var(--font-sans); color: var(--color-text-quarterary-hover); transition: color var(--dur-3) var(--ease-std); }
+.ob-row.is-run .ob-row__l, .ob-row.is-done .ob-row__l { color: var(--color-text-primary); }
+.ob-row.is-wait .ob-row__n { opacity: 0; }
+.ob-row__n { width: 32px; flex-shrink: 0; text-align: right; font: 600 14px/20px var(--font-sans); font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }   /* only the number: the name says what's counted */
+.ob-row.is-run .ob-row__n { color: var(--color-text-primary); }
+.ob-row.is-run .ob-row__l { background: linear-gradient(90deg, var(--color-text-primary) 0 40%, var(--ai-accent) 50%, var(--color-text-primary) 60% 100%); background-size: 240% 100%;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: ob-shine 1.8s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .ob-build__veil, .ob-build__t1, .ob-build__t2, .ob-row__st > * { transition: none; } .ob-row { animation: none; } .ob-hello__p.is-busy span:last-child { animation: none; } }
+
+/* generation progress (left pane while Newton keeps working on the right) */
+.gen-row { display: flex; align-items: center; gap: 10px; min-height: 28px; font: 400 14px/20px var(--font-sans); color: var(--color-text-quarterary-hover); }
+.gen-row__st { width: 18px; height: 18px; display: grid; place-items: center; flex-shrink: 0; }
+.gen-row__st .dot { width: 8px; height: 8px; border-radius: 9999px; background: var(--color-fg-tertiary); }
+.gen-row.is-run { color: var(--color-text-primary); }
+.gen-row.is-run .ag-spinner { color: var(--color-fg-brand-primary); }
+.gen-row.is-done { color: var(--color-text-secondary); }
+.gen-row.is-done svg { width: 18px; height: 18px; color: var(--color-text-success-primary); }
+
+/* Newton's assisted form inside the chat: fields he can fill, he fills himself */
+.nw-form { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: var(--radius-xl); border: 1px solid var(--color-border-img); background: var(--color-fg-primary); }
+.nw-form__row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.nw-form__foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.nw-form .ag-input:disabled { background: var(--color-fg-primary); color: var(--color-text-primary); }
+.is-filling { animation: ag-pulse 1s ease-in-out infinite; }
+
+/* "See my hub": the hub over the blurred split — a big browser window, the page scrolls, one way on */
+.ob-show { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 2.5vh; overflow: hidden; background: color-mix(in srgb, var(--foreground) 66%, transparent); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }   /* a thick fog behind (Daria, 27.09) */
+/* the burst behind the hub (Daria, 28.09, after Prismatic Burst): rays of Newton's colours from the middle, blurred, two
+   layers turning slowly opposite ways so the light moves; faded towards the edges. Still for those who turned motion off. */
+.ob-burst { position: absolute; inset: 0; pointer-events: none; -webkit-mask-image: radial-gradient(farthest-side, transparent 20%, black 55%, transparent 115%); mask-image: radial-gradient(farthest-side, transparent 20%, black 55%, transparent 115%); }   /* reaches past the window's edges, or it hides all of it */
+/* five times bigger (Daria, 28.09: thin rays read as lines — a background light, not a pattern): broad soft beams */
+.ob-burst i { position: absolute; left: 50%; top: 50%; width: 180vmax; height: 180vmax; margin: -90vmax 0 0 -90vmax; border-radius: 50%; filter: blur(24px); }   /* no screen blend: over the dark fog it washed the light out */
+.ob-burst i:first-child { opacity: .8; animation: ob-burst 60s linear infinite;
+  background: repeating-conic-gradient(from 0deg, var(--color-fg-pink-primary) 0deg 6deg, transparent 6deg 30deg, var(--color-fg-brand-primary-hover) 30deg 35deg, transparent 35deg 60deg, var(--color-fg-violet-secondary) 60deg 66deg, transparent 66deg 90deg); }
+.ob-burst i:last-child { opacity: .5; filter: blur(44px); animation: ob-burst 90s linear infinite reverse;
+  background: repeating-conic-gradient(from 5deg, var(--color-fg-brand-secondary) 0deg 12deg, transparent 12deg 60deg, var(--color-fg-pink-secondary) 60deg 70deg, transparent 70deg 120deg); }
+@keyframes ob-burst { to { rotate: 360deg; } }
+@media (prefers-reduced-motion: reduce) { .ob-burst i { animation: none; } }
+/* the window: 95% of the height with the way on under it, the width in the same proportion (Daria, 27.09) */
+.ob-show__box { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.ob-show__win { position: relative; width: min(calc(100vw - 160px), calc((95vh - 88px) * 1.37)); height: calc(95vh - 88px); display: flex; flex-direction: column; border-radius: var(--radius-2xl1);
+  background: var(--color-fg-primary); box-shadow: var(--shadow-xl); }
+.ob-show__x { position: absolute; top: 0; left: calc(100% + 16px); width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 9999px;
+  background: var(--color-fg-primary); color: var(--color-text-primary); box-shadow: var(--shadow-lg); cursor: pointer; }
+.ob-show__x svg { width: 18px; height: 18px; }
+.ob-show__x:hover { background: var(--color-fg-primary-hover); }
+.ob-show__view { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; border-radius: inherit; }
+.ob-show__page { position: relative; overflow: hidden; }
+.ob-show__frame { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; pointer-events: none; }
+.ob-show__shield { position: absolute; inset: 0; }   /* the wheel scrolls the window, the hub itself isn't clicked */
+.ob-show__foot { display: flex; justify-content: center; }
+.ob-show__foot .ob-go { min-width: 280px; box-shadow: var(--shadow-xl); }
+.ob-show.anim-in .ob-show__win { animation: mo-modal-in var(--dur-3) var(--ease-out); }
+.ob-show.anim-out { animation: mo-fade-out var(--dur-2) var(--ease-in) forwards; pointer-events: none; }
+
+/* one verification group = one card in the conversation; a finished one stays as a card and turns green */
+.nw-form__head { display: flex; align-items: center; gap: 8px; font: 600 14px/20px var(--font-sans); color: var(--color-text-primary); }
+.nw-form__head svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--color-text-success-primary); }
+.nw-form__head em { margin-left: auto; font: 500 12px/16px var(--font-sans); font-style: normal; color: var(--color-text-success-primary); }
+.nw-form.is-done { border-color: var(--color-border-success); background: var(--color-fg-success-tertiary); }
+.nw-form.is-done .ag-input, .nw-form.is-done .logo-row { background: var(--color-fg-primary); color: var(--color-text-secondary); border-color: var(--color-border-secondary); }
+
+/* Newton's headline offer: a banner that sells, not another list row */
+.nw-banner { display: flex; flex-direction: column; gap: 6px; padding: 18px; border-radius: var(--radius-2xl1); text-align: left; width: 100%; cursor: pointer; border: 0; font: inherit;
+  background: linear-gradient(120deg, var(--color-gradient-gs-from), var(--color-gradient-gs-to)); box-shadow: var(--shadow-md); transition: box-shadow .15s ease, transform .15s ease; }
+.nw-banner:hover { box-shadow: var(--shadow-xl); transform: translateY(-1px); }
+.nw-banner__label { display: inline-flex; align-items: center; gap: 6px; font: 600 12px/16px var(--font-sans); color: var(--color-text-primary); opacity: .75; }
+.nw-banner__label .ai-ico { color: var(--color-text-primary); }
+.nw-banner b { font: 600 22px/28px var(--font-sans); color: var(--color-text-primary); }
+.nw-banner p { font: 400 14px/20px var(--font-sans); color: var(--color-text-secondary-hover); }
+.nw-banner__cta { align-self: flex-start; margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 16px; border-radius: 9999px;
+  background: var(--color-fg-primary); color: var(--color-text-primary); font: 600 14px/20px var(--font-sans); box-shadow: var(--shadow-xs); }
+.nw-banner__cta svg { width: 16px; height: 16px; }
+
+/* Newton's suggestions: cards you can act on, not a row of small pills */
+.nw-cards { display: flex; flex-direction: column; gap: 8px; }
+.nw-card { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; text-align: left; cursor: pointer;
+  border: 1px solid var(--color-border-img); border-radius: var(--radius-xl); background: var(--color-fg-primary); font: inherit; transition: box-shadow .15s ease, transform .15s ease; }
+.nw-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.nw-card__ico { width: 32px; height: 32px; flex-shrink: 0; display: grid; place-items: center; border-radius: var(--radius-lg); background: var(--ai-surface); }
+.nw-card__ico svg { width: 16px; height: 16px; }
+.nw-card__txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.nw-card__txt b { font: 600 14px/20px var(--font-sans); color: var(--color-text-primary); }
+.nw-card__txt span { font: 400 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+.nw-card > svg:last-child { width: 16px; height: 16px; flex-shrink: 0; color: var(--color-text-quarterary-hover); }
+
+/* ---------- action cards: what to do, on the page (Daria, 26.09) ----------
+   A signal (Daria, 27.09): the number, one line that reads with it as a sentence, an arrow. Click → the task in the chat.
+   One height for all, so a row never jumps: the line is clamped, the arrow sits at the bottom.
+   A flat soft kit colour per kind of work, only to tell them apart; no gradients. The arrow is
+   white, not brand blue: a card is a suggestion, the blue stays for the one main action on screen. */
+.cta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 16px; align-items: stretch; }
+.cta-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@container page (max-width: 900px) { .cta-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }   /* 2×2, not 3 + 1 */
+.cta { --t-bg: var(--color-fg-primary); --t-line: var(--color-border-secondary);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; min-height: 164px; padding: 20px;
+  border-radius: var(--radius-2xl1); border: 1px solid var(--t-line); background: var(--t-bg); box-shadow: var(--shadow-xs);
+  cursor: pointer; transition: transform .25s cubic-bezier(.2, .8, .2, 1), box-shadow .25s ease, border-color .25s ease; }
+.cta:hover, .cta:focus-visible { transform: translateY(-2px); box-shadow: var(--shadow-lg); outline: none; }
+/* three levels (Daria, 27.09): broken — red with a bolt; tolerable — orange; advice — lime (the kit has no yellow,
+   lime is the closest kit colour) */
+.cta { --t-ink: var(--color-text-brand-primary); --t-fill: var(--color-fg-brand-primary); gap: 6px; min-height: 0; }
+.cta--lv1 { --t-bg: var(--color-fg-error-tertiary);   --t-line: var(--color-fg-error-secondary);   --t-ink: var(--color-text-error-primary);   --t-fill: var(--color-fg-error-solid); }
+.cta--lv2 { --t-bg: var(--color-fg-warning-tertiary); --t-line: var(--color-fg-warning-secondary); --t-ink: var(--color-text-warning-primary); --t-fill: var(--color-fg-warning-solid); }
+/* advice is blue now (Daria, 28.09): the soft blue of the chat's blocks where something gets made — was lime */
+.cta--lv3 { --t-bg: var(--color-fg-brand-tertiary);   --t-line: var(--color-fg-brand-secondary);   --t-ink: var(--color-text-brand-primary);   --t-fill: var(--color-fg-brand-primary); }
+.cta__title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font: 600 16px/22px var(--font-sans); letter-spacing: -.01em; color: var(--color-text-primary); }
+.cta__bolt { width: 12px; height: 12px; color: var(--t-ink); }
+/* the type badge sits above the title, top left; a broken thing's bolt goes inside it (Daria, 28.09) */
+.cta__head { align-self: stretch; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+/* the arrow sits by the title, 16px from it (Daria, 28.09) — not down in the corner */
+.cta__trow { align-self: stretch; display: flex; align-items: flex-start; gap: 16px; }
+.cta__trow .cta__title { flex: 1; min-width: 0; }
+/* the arrow right after the title's last word, a plain icon 16px from it (Daria, 28.09: the button didn't fit) */
+.cta__end { white-space: nowrap; }   /* the last word and the arrow go together: the arrow never sits alone on a line */
+.cta__arrow { display: inline-block; width: 16px; height: 16px; margin-left: 12px; vertical-align: -3px; color: var(--color-text-primary); transition: translate var(--dur-1, .15s) ease; }
+.cta__type { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 9999px; background: var(--color-fg-primary); font: 600 12px/16px var(--font-sans); color: var(--t-ink); white-space: nowrap; }
+.cta__sub { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font: 400 14px/20px var(--font-sans); color: var(--color-text-secondary); }
+.cta__foot { align-self: stretch; display: flex; align-items: flex-end; gap: 12px; margin-top: auto; padding-top: 8px; }
+/* in the chat: the same card, compact (Daria, 28.09) — less padding, a smaller title and number */
+.cta--chat { padding: 14px 16px; gap: 4px; }
+.cta--chat .cta__head { gap: 6px; }
+.cta--chat .cta__title { font-size: 14px; line-height: 20px; }
+.cta--chat .cta__arrow { width: 14px; height: 14px; margin-left: 12px; }
+.cta--chat .cta__ring { flex-basis: 20px; width: 20px; height: 20px; }
+.cta--chat .cta__num { padding-top: 6px; }
+.cta--chat .cta__num > b { font-size: 22px; line-height: 28px; }
+.cta--chat:hover { transform: none; box-shadow: var(--shadow-md); }
+.cta__num { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 6px; }
+/* a share is a ring on the left of the number, not a bar under it (Daria, 28.09): every card's number sits on one line.
+   The kit's ring, small: the share in the card's colour, the rest white, the middle cut out in the card's own colour */
+.cta__ring { flex: 0 0 24px; width: 24px; height: 24px; margin-right: 2px; align-self: center;
+  background: radial-gradient(closest-side, var(--t-bg) calc(100% - 5px), transparent calc(100% - 4px)), conic-gradient(var(--t-fill) calc(var(--v) * 1%), var(--color-fg-primary) 0); }
+.cta__num > b { font: 700 28px/32px var(--font-sans); letter-spacing: -.02em; color: var(--t-ink); white-space: nowrap; }
+.cta__num > span:not(.cta__bar) { font: 600 12px/16px var(--font-sans); color: var(--t-ink); }
+.cta__bar { flex-basis: 100%; max-width: 300px; height: 6px; background: var(--color-fg-primary); }   /* white track on the card's colour (Daria, 27.09) */   /* the kit's progress; never longer than in a row of three at 1920 (299px), so a lone card doesn't stretch it */
+.cta__bar > span { background: var(--t-fill); }
+.cta__go { flex-shrink: 0; }   /* the kit's icon button, tertiary */
+/* the whole card is the button: hovering it shows the kit's own hover state of that button (the same values as kit) */
+.cta:hover .cta__go, .cta:focus-visible .cta__go { --bg: var(--color-fg-primary); --border: var(--color-border-primary); }
+@media (prefers-reduced-motion: reduce) { .cta { transition: none; } .cta:hover { transform: none; } }
+
+/* ---------- not built in the prototype (Daria, 26.09; one way everywhere, 27.09) ----------
+   Anything the prototype doesn't have is marked data-proto-tip. It stays in its place, a little quieter than the rest
+   (softly greyed, not the kit's disabled grey), doesn't answer the mouse — no hover, no press, no click — and shows
+   only our black tooltip (.ag-tooltip). The tooltip is one element over everything (app.js), so no panel cuts it. */
+[data-proto-tip] { pointer-events: none; opacity: .62; }
+.proto-tip { position: fixed; z-index: 10000; left: 0; top: 0; white-space: nowrap; max-width: none; pointer-events: none; opacity: 0; transition: opacity .12s ease; }
+.proto-tip.is-on { opacity: 1; }
+
+/* confetti: a burst out of a point, then the fall (AG.confetti) */
+.confetti { position: fixed; inset: 0; z-index: 9999; overflow: hidden; pointer-events: none; }
+.confetti span { position: absolute; line-height: 1; animation: confetti var(--d) cubic-bezier(.15, .7, .4, 1) forwards; }
+.confetti .confetti__bit { width: 8px; height: 13px; border-radius: 2px; }
+@keyframes confetti {
+  0% { transform: translate(-50%, -50%) scale(.3); opacity: 1; }
+  30% { transform: translate(calc(-50% + var(--dx) * .7), calc(-50% + var(--dy))) rotate(calc(var(--r) * .35)) scale(1); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy) + 820px)) rotate(var(--r)); opacity: 0; } }
+
+/* ---------- motion (Daria, 27.09): calm, standard transitions, the same on every page ----------
+   Nothing unique: colors ease instead of snapping, a press gives a little, popovers and windows
+   ease in and out, a new page fades up. Keyframes use `translate` / `scale`, not `transform`,
+   so menus centred with transform (Hub → Styles, +) keep their place while they animate.
+   Opening and closing of anything toggled with `hidden` is wired once in app.js (anim-in / anim-out). */
+:root {
+  --ease-out: cubic-bezier(.22, 1, .36, 1);  /* things arriving: fast start, long soft landing */
+  --ease-in: cubic-bezier(.4, 0, 1, 1);      /* things leaving */
+  --ease-std: cubic-bezier(.4, 0, .2, 1);    /* state changes */
+  --ease-layout: cubic-bezier(.32, .72, 0, 1);   /* the layout reshaping: sidebar, Newton's width, folding groups */
+  --dur-1: 120ms; --dur-2: 180ms; --dur-3: 260ms; --dur-layout: 460ms;
+}
+
+/* 1. hover, focus, selected: eased, not snapped */
+.ag-btn, .ag-menu__item, .ag-nav-item, .ag-nav-sub a, .ag-nav-sub button, .ag-chip-filter, .ag-tab-seg, .ag-tab-line > span,
+.ag-check__box, .ag-table tbody tr, .filter, .tag, .proto-btn, .nw-chip, .made__item,
+.tool, .eye, .pg-item, .hub-dev,
+.chat__tool, .chat__plus, .chat__mic, .chat__send, .cw-opt, .cw-var__lock, .cw-pkg__row, .cw-pkg__row > svg, .cw-step__edit, .chat__did-head, .chat__chip, .cw-decide {
+  transition: background-color var(--dur-1) var(--ease-std), border-color var(--dur-1) var(--ease-std), color var(--dur-1) var(--ease-std),
+    box-shadow var(--dur-2) var(--ease-std), opacity var(--dur-1) var(--ease-std), transform var(--dur-1) var(--ease-out), scale var(--dur-1) var(--ease-out);
+}
+/* 2. press: a small give on everything you push */
+:is(.ag-btn, .filter, .tag, .proto-btn, .nw-chip, .tool, .eye, .chat__plus, .chat__mic, .chat__send, .chat__chip, .cw-decide):active:not(:disabled):not([aria-disabled="true"]) { scale: .97; }
+
+/* 3. tooltips: fade with a slight grow (the delay stays) */
+.hub-tools [data-tip]::after { scale: .96; transition: opacity var(--dur-1) var(--ease-std) .15s, scale var(--dur-2) var(--ease-out) .15s; }
+[data-proto-tip]:hover::after, [data-proto-tip]:focus-visible::after, .hub-tools [data-tip]:hover::after, .hub-tools [data-tip]:focus-visible::after { scale: 1; }
+
+/* 4. opening and closing (classes from app.js) */
+@keyframes mo-fade-in { from { opacity: 0; } }
+@keyframes mo-fade-out { to { opacity: 0; } }
+@keyframes mo-pop-in { from { opacity: 0; translate: 0 var(--pop-y, -4px); scale: .98; } }
+@keyframes mo-pop-out { to { opacity: 0; translate: 0 var(--pop-y, -4px); scale: .98; } }
+@keyframes mo-modal-in { from { opacity: 0; translate: 0 8px; scale: .96; } }
+@keyframes mo-modal-out { to { opacity: 0; scale: .98; } }
+@keyframes mo-slide-in { from { translate: 100% 0; } }
+@keyframes mo-slide-out { to { translate: 100% 0; } }
+@keyframes mo-rise-in { from { opacity: 0; translate: 0 12px; } }
+@keyframes mo-sink-out { to { opacity: 0; translate: 0 8px; } }
+@keyframes mo-page-in { from { opacity: 0; translate: 0 6px; } }
+
+[hidden].anim-out { display: var(--mo-disp, block) !important; pointer-events: none; }
+/* menus (header, Hub bar) and the field over a selected block in Hub */
+.ag-menu, .ctx { transform-origin: top center; }
+.hub-tools .ag-menu { --pop-y: 4px; transform-origin: bottom center; }   /* these open upwards */
+.ctx { --pop-y: 4px; }
+.ag-menu.anim-in, .ctx.anim-in { animation: mo-pop-in var(--dur-2) var(--ease-out); }
+.ag-menu.anim-out, .ctx.anim-out { animation: mo-pop-out var(--dur-1) var(--ease-in) forwards; }
+/* windows: the backdrop fades, the window rises */
+.ag-backdrop.anim-in, .drawer-bg.anim-in { animation: mo-fade-in var(--dur-2) var(--ease-std); }
+.ag-backdrop.anim-out, .drawer-bg.anim-out { animation: mo-fade-out var(--dur-2) var(--ease-in) forwards; }
+.ag-backdrop.anim-in > .ag-modal { animation: mo-modal-in var(--dur-3) var(--ease-out); }
+.ag-backdrop.anim-out > .ag-modal { animation: mo-modal-out var(--dur-2) var(--ease-in) forwards; }
+/* the item form slides in from the right */
+.drawer-bg.anim-in > .drawer { animation: mo-slide-in var(--dur-3) var(--ease-out); }
+.drawer-bg.anim-out > .drawer { animation: mo-slide-out var(--dur-2) var(--ease-in) forwards; }
+/* toast rises from the bottom */
+.toast-wrap.anim-in { animation: mo-rise-in var(--dur-3) var(--ease-out); }
+.toast-wrap.anim-out { animation: mo-sink-out var(--dur-2) var(--ease-in) forwards; }
+/* a new page inside Dashboard or Hub fades up (AG.pageIn) */
+.page-in { animation: mo-page-in var(--dur-3) var(--ease-out); }
+
+/* a new page inside Dashboard or Hub (AG.swap): the old page fades out quickly, the new one fades up; if Newton's
+   width changes at the same moment, the page area glides to its new size */
+::view-transition-old(ag-page) { animation: mo-fade-out var(--dur-1) var(--ease-in) both; }
+::view-transition-new(ag-page) { animation: mo-page-in var(--dur-3) var(--ease-out) 60ms both; }
+::view-transition-group(ag-page) { animation-duration: var(--dur-3); animation-timing-function: var(--ease-layout); }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--dur-2); }
+
+/* 5. between pages (Dashboard ↔ Hub, onboarding → Dashboard, AG.go): the work area fades out, the header stays;
+   the next page fades its work area in, a beat late so it has drawn itself first */
+.app__body { animation: mo-page-in var(--dur-3) var(--ease-out) 60ms backwards; transition: opacity 150ms var(--ease-in), gap var(--dur-layout) var(--ease-layout); }
+.is-leaving .app__body { opacity: 0; }
+.is-embed .app__body, .ob-body .app__body { animation: none; }   /* onboarding opens in place (Daria, 27.09): nothing slides in, the link just types itself */
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-in, .anim-in > *, .anim-out, .anim-out > *, .page-in, .app__body { animation: none !important; }
+  :is(.ag-btn, .filter, .tag, .proto-btn, .nw-chip, .tool, .eye, .chat__plus, .chat__mic, .chat__send, .chat__chip, .cw-decide):active { scale: none; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
+/* sections the prototype doesn't use: in the menu like the others, softly greyed, our tooltip, no click (Daria, 27.09) */
+.app__side .ag-nav-sub .nav-off { display: flex; align-items: center; height: 28px; padding: 0 8px; font: 500 14px/20px var(--font-sans); color: var(--sidebar-accent-foreground); }
+
+/* Preview on a phone or a tablet: the window is the device's width, the page scaled a little up */
+.ob-show--phone .ob-show__win { width: min(calc(100vw - 160px), calc((95vh - 88px) * .5)); }
+.ob-show--tablet .ob-show__win { width: min(calc(100vw - 160px), calc((95vh - 88px) * 1.05)); }
+.ob-show--phone .ob-browser__url { max-width: 220px; }
+
+/* the prototype's controls: a dashed pill next to the header panel — clearly not part of the product (Daria, 28.09) */
+.proto-btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px 0 10px; border-radius: 9999px; border: 1.5px dashed var(--color-border-primary);
+  background: var(--color-fg-primary); font: 500 14px/20px var(--font-sans); color: var(--color-text-secondary); cursor: pointer; }
+.proto-btn svg { width: 14px; height: 14px; }
+.proto-btn:hover, .proto-btn[aria-expanded="true"] { border-color: var(--color-text-tertiary); color: var(--color-text-primary); }
+.proto-menu { width: 300px; }
+.proto-menu__note { padding: 4px 8px 8px; font: 500 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+.proto-item { position: relative; flex-direction: column; align-items: flex-start; gap: 0; padding-right: 32px; height: auto; min-height: 36px; text-align: left; }
+.proto-item b { font: 500 14px/20px var(--font-sans); color: var(--color-text-primary); }
+.proto-item small { font: 400 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+.proto-item .proto-item__on { position: absolute; right: 10px; top: 50%; translate: 0 -50%; width: 14px; height: 14px; color: var(--color-text-primary); }
+
+/* scrollbars (Daria, 28.09): thin — 4px, the kit's overlay grey, no track. Only the ::-webkit rules: setting scrollbar-width
+   would make Chrome ignore them and draw its own wider bar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-fg-overlay); border-radius: 9999px; }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* cards: one radius everywhere, 16px (Daria, 28.09: they wandered — 6, 11, 14, 18) — the page's cards, number cards, tables,
+   the hub banner */
+.cta, .ag-card, .table-card, .review, .launch { border-radius: 16px; }
+
+/* Newton's panel (Daria, 28.09, option 1 of three): white, with a thin line of his colours round its edge — violet, blue,
+   pink, each once. Draws the eye without tinting what's inside (the waves behind the text read as smudges) */
+.app__chat.nw-edge:not([data-nw="solo"]):not([data-nw="minimal"]) { position: relative; }
+.app__chat.nw-edge:not([data-nw="solo"]):not([data-nw="minimal"])::after { content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none;
+  border-radius: inherit; padding: 1.5px;
+  background: linear-gradient(135deg, var(--color-violet-300), var(--color-fg-brand-primary-hover) 50%, var(--color-fg-pink-primary));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+
+/* the hub banner as a promo (Daria, 28.09): text on the left, the hub's art on the right in a glow of the game's accent */
+.review--promo { grid-template-columns: minmax(0, 1fr) minmax(200px, 40%); align-items: center; min-height: 240px; padding: 32px 40px; position: relative; }
+@container page (max-width: 900px) { .review--promo { grid-template-columns: minmax(0, 1fr) 200px; } }
+.review--promo .review__info { padding-bottom: 0; gap: 24px; }
+.review--promo .review__head { gap: 8px; }
+.review--promo .review__head em { font-style: normal; font-weight: 600; color: var(--rv-accent); }
+.review--dark .review__ghost { --text: var(--rv-fg); --bg: transparent; --border: transparent; }
+.review--dark .review__ghost:hover { --bg: transparent; opacity: .8; }
+.review__art { position: relative; align-self: stretch; min-height: 180px; }
+.review__art::before { content: ""; position: absolute; inset: -20% -10%; background: radial-gradient(closest-side, var(--rv-glow), transparent); }
+.review__art > span { position: absolute; display: grid; place-items: center; }
+.review__art > span > svg, .review__art > span > img { width: 100%; height: 100%; }
+/* sized by the banner's height, not its width: on a wide screen the art stays a picture, not a wall */
+.review__art-main { left: 50%; top: 50%; height: 80%; aspect-ratio: 1; translate: -50% -50%; }
+.review__art-s1 { left: calc(50% + 22%); top: 6%; height: 28%; aspect-ratio: 1; rotate: 12deg; }
+.review__art-s2 { right: calc(50% + 20%); bottom: 6%; height: 24%; aspect-ratio: 1; rotate: -10deg; }

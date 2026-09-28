@@ -1,0 +1,1348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Aghanim · AI-first dashboard prototype">
+<meta property="og:description" content="Newton, the AI in the dashboard: onboarding, Home, a Halloween event built in the chat, the hub builder. Best on a computer, 1280px and wider.">
+<meta property="og:url" content="https://daria-km.github.io/aghanim-prototype/prototype/Hub.html">
+<meta property="og:image" content="https://daria-km.github.io/aghanim-prototype/preview.png">
+<meta property="og:image:width" content="1440">
+<meta property="og:image:height" content="756">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Newton, the AI in the dashboard: onboarding, Home, a Halloween event built in the chat, the hub builder. Best on a computer, 1280px and wider.">
+<script>(function(){try{var v='78fca03',k="aghanim-proto-build",had=localStorage.getItem("aghanim-proto-v1")||localStorage.getItem("aghanim-proto-chat");if(localStorage.getItem(k)!==v){localStorage.removeItem("aghanim-proto-v1");localStorage.removeItem("aghanim-proto-chat");localStorage.setItem(k,v);if(had&&!/Onboarding\.html/.test(location.pathname))location.replace("Onboarding.html#start");}}catch(e){}})();</script>
+
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aghanim · Hub</title>
+<link rel="stylesheet" href="../aghanim-ui/tokens.css?v=78fca03">
+<link rel="stylesheet" href="../aghanim-ui/components.css?v=78fca03">
+<link rel="stylesheet" href="app/app.css?v=78fca03">
+<link rel="stylesheet" href="app/chat.css?v=78fca03">
+<link rel="stylesheet" href="app/dark-primary.css?v=78fca03"><!-- trying dark primary buttons (Daria, 27.09); remove this line to go back to blue -->
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Rubik:wght@500;700&family=Space+Grotesk:wght@500;700&family=Cinzel:wght@700&family=Orbitron:wght@700&family=Pixelify+Sans:wght@600&family=Fredoka:wght@600&family=Russo+One&family=Bungee&family=Luckiest+Guy&family=Baloo+2:wght@800&family=Grenze+Gotisch:wght@700&family=Silkscreen:wght@700&family=Caveat+Brush&display=swap" rel="stylesheet">
+<style>
+/* Hub has no left column any more (Daria, 26.09): the canvas takes the whole left window, the page and the device
+   are picked from two small controls on top of it. */
+.hub-center { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--color-bg-secondary); }   /* white: the gray is the backdrop behind the windows */
+/* The hub fills the whole left window, no white margins (Daria, 26.09). Desktop is a real 1280px page scaled to the
+   window's width — its proportions stay (Daria: it was stretching); Phone and Tablet are scaled up to the window's
+   width (up to 1.5×) in the middle of a quiet grey field — Secondary Alt from the kit (Daria, 27.09). */
+.canvas { position: relative; flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }   /* relative: the field next to the element scrolls with the hub */
+.canvas--framed { padding: 24px 24px 104px; }
+#stage { flex: 1 0 auto; display: flex; flex-direction: column; }
+/* page and device: a small floating bar at the bottom centre, over the hub (Readymag's toolbar as the reference) */
+.hub-tools { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 25; display: flex; align-items: center; gap: 4px; padding: 4px;
+  border-radius: var(--radius-xl); border: 1px solid var(--color-border-secondary); background: var(--color-fg-primary); box-shadow: var(--shadow-lg); }
+.hub-tools .dd__menu { top: auto; bottom: calc(100% + 10px); }   /* the bar sits at the bottom: menus open upwards */
+.hub-pick { height: 36px; min-width: 176px; padding: 0 10px 0 12px; gap: 8px; }
+.hub-pick > span { flex: 1; }
+.hub-dev { width: 36px; height: 36px; border-color: transparent; box-shadow: none; }
+.hub-dev svg { width: 18px; height: 18px; }
+/* Newton's quick actions live in the bar as icons (Daria, 26.09 — they came out of the chat): each has a tooltip,
+   the one Newton recommends carries his gradient dot, a pressed one (Store first, Keep this one) is tinted */
+.tool-sep { width: 1px; height: 22px; margin: 0 4px; background: var(--color-border-secondary); }
+.tool { position: relative; width: 36px; height: 36px; flex-shrink: 0; display: grid; place-items: center; border: 0; border-radius: var(--radius-lg); background: none; color: var(--color-text-secondary); cursor: pointer; }
+.tool svg { width: 18px; height: 18px; }
+.tool:hover { background: var(--color-fg-primary-hover); color: var(--color-text-primary); }
+.tool[aria-pressed="true"] { background: var(--color-fg-secondary-alt); color: var(--color-text-primary); }   /* pressed: the kit's grey, no blue in buttons (Daria, 27.09) */
+.tool[aria-disabled="true"] { cursor: default; }
+.tool[aria-disabled="true"]:not([aria-pressed="true"]) { color: var(--color-text-quarterary); background: none; }
+.tool--ai { background: var(--ai-surface); }
+.tool--ai .ai-ico { width: 18px; height: 18px; }
+.tool--ai:hover { background: var(--ai-surface); filter: saturate(1.3); }
+.tool--ai[aria-disabled="true"] { background: none; filter: none; }
+.tool--ai[aria-disabled="true"] .ai-ico { color: var(--color-text-quarterary); }
+.tool.is-rec::before { content: ""; position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 9999px; background: var(--ai-border); box-shadow: 0 0 0 2px var(--color-fg-primary); }
+/* what is selected: the block, or "Block › its cards" — the block name takes you back up */
+.tool-part { position: relative; display: inline-flex; align-items: center; gap: 2px; height: 28px; padding: 0 2px 0 10px; border-radius: 9999px; background: var(--color-fg-brand-tertiary); color: var(--color-text-brand-solid); font: 500 14px/20px var(--font-sans); white-space: nowrap; }
+.tool-part > button { position: relative; width: 24px; height: 24px; display: grid; place-items: center; border: 0; border-radius: 9999px; background: none; color: inherit; cursor: pointer; }
+.tool-part > button:hover { background: var(--color-fg-primary); }
+.tool-part svg { width: 12px; height: 12px; }
+.tool-part .tool-up { position: relative; width: auto; height: auto; padding: 0; border: 0; background: none; font: inherit; color: var(--color-text-primary); cursor: pointer; }
+.tool-part .tool-up:hover { text-decoration: underline; background: none; }
+.tool-part .tool-crumb { margin: 0 4px; color: var(--color-text-tertiary); }
+/* the tooltip — the kit's .ag-tooltip look, above the button (the bar sits at the bottom) */
+.hub-tools [data-tip]::after { content: attr(data-tip); position: absolute; z-index: 50; left: 50%; bottom: calc(100% + 10px); transform: translateX(-50%);
+  padding: 4px 8px; border-radius: var(--radius-md); background: #000000cc; color: var(--color-text-inverse); box-shadow: var(--shadow-md);   /* = .ag-tooltip */
+  font: 500 12px/16px var(--font-sans); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .12s ease; }
+.hub-tools [data-tip]:hover::after, .hub-tools [data-tip]:focus-visible::after { opacity: 1; }
+.hub-tools .dd:has(.dd__menu:not([hidden])) [data-tip]::after { display: none; }   /* no tooltip over an open menu */
+/* the page picker: every page with a preview of it (Readymag's Pages as the reference) */
+.pg-menu { width: 320px; max-height: min(560px, calc(100vh - 200px)); overflow: auto; }
+.pg-item { display: flex; align-items: center; gap: 2px; border-radius: var(--radius-lg); }
+.pg-item + .pg-item { margin-top: 2px; }
+.pg-item:hover, .pg-item.is-cur { background: var(--color-fg-primary-alt); }
+.pg-item__pick { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 6px; border: 0; border-radius: var(--radius-lg); background: none; text-align: left; cursor: pointer; font: inherit; }
+.pg-thumb { width: 112px; height: 70px; flex-shrink: 0; overflow: hidden; border-radius: var(--radius-md); border: 1px solid var(--color-border-secondary); background: var(--color-fg-secondary); pointer-events: none; }
+.pg-thumb .hub-frame { border-radius: 0; box-shadow: none; }
+.pg-item__txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pg-item__txt b { display: flex; align-items: center; gap: 6px; font: 500 14px/20px var(--font-sans); color: var(--color-text-primary); }
+.pg-item__txt span { font: 400 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+.pg-item.is-hidden .pg-thumb { opacity: .4; }
+.pg-item.is-hidden .pg-item__txt b { color: var(--color-text-tertiary); }
+.pg-dot { width: 7px; height: 7px; border-radius: 9999px; background: var(--color-fg-warning-solid); }
+.eye { width: 30px; height: 30px; flex-shrink: 0; margin-right: 4px; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-text-tertiary); display: grid; place-items: center; cursor: pointer; }
+.eye:hover { background: var(--color-fg-primary); color: var(--color-text-primary); }
+.eye svg { width: 16px; height: 16px; }
+.dev-menu { width: 220px; }
+/* Styles: the tags from onboarding (Daria, 26.09) — the same set and colours; tap one and the look follows */
+.sty-menu { width: 380px; padding: 12px; left: 50%; transform: translateX(-50%); }   /* centred over its button, so it stays inside the canvas */
+/* kit rules for a menu: group names — section label (10/15 caps), everything else — 14px medium; one left edge for all */
+.sty-menu .text-section-label { padding: 0 0 8px; }
+.sty-menu__sep { margin: 12px 0; border: 0; border-top: 1px solid var(--color-border-secondary); }
+.sty-menu .tagcloud { justify-content: flex-start; gap: 6px; padding: 0; }
+.sty-menu .tag, .sty-menu .tag.is-on { height: 32px; padding: 0 12px; font: 500 14px/20px var(--font-sans); }
+.sty-menu__foot { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-border-secondary); }
+/* next to what's selected: a small field to say what to change, the dice and the lock (Daria, 26.09) */
+.ctx { position: absolute; z-index: 24; display: flex; align-items: center; gap: 2px; padding: 4px; width: 340px; border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border-secondary); background: var(--color-fg-primary); box-shadow: var(--shadow-lg); }
+.ctx form { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; padding-left: 8px; }
+.ctx form .ai-ico { width: 14px; height: 14px; flex-shrink: 0; }
+.ctx input { flex: 1; min-width: 0; height: 32px; border: 0; outline: none; background: none; font: 400 14px/20px var(--font-sans); color: var(--color-text-primary); }
+.ctx input::placeholder { color: var(--color-text-tertiary); }
+/* the field: ready asks under it, one tap each (Daria, 28.09) */
+.ctx { flex-wrap: wrap; }
+.ctx__asks { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 4px 4px 8px; border-top: 1px solid var(--color-border-secondary); margin-top: 2px; }
+.ctx__ask { height: 26px; padding: 0 10px; border-radius: 9999px; border: 1px solid var(--color-border-primary); background: var(--color-fg-primary); cursor: pointer;
+  font: 500 12px/16px var(--font-sans); color: var(--color-text-primary); transition: background .12s, border-color .12s; }
+.ctx__ask:hover { background: var(--color-fg-primary-hover); border-color: var(--color-fg-pink-secondary); }
+.ctx.is-miss input::placeholder { color: var(--color-text-warning-solid); }
+.ctx.is-miss { animation: ctx-miss .3s ease; }
+@keyframes ctx-miss { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+.ctx .tool { width: 32px; height: 32px; }
+.ctx input:disabled { background: none; }
+.ctx .tool[aria-disabled="true"] { color: var(--color-text-quarterary); cursor: default; background: none; }
+/* + on Home: the blocks that aren't on the page, each with a preview in the hub's current look */
+.add-menu { width: 340px; max-height: min(560px, calc(100vh - 200px)); overflow: auto; left: 50%; transform: translateX(-50%); }   /* centred over +, like Styles */
+.add-menu .pg-thumb { height: 64px; }
+.add-head { display: flex; align-items: center; gap: 8px; padding-right: 2px; }
+.add-head .text-section-label { flex: 1; }
+.add-rec { display: inline-flex; align-items: center; gap: 3px; margin-left: 8px; font: 500 12px/16px var(--font-sans); color: var(--ai-accent); vertical-align: 1px; }
+.add-rec .ai-ico { width: 12px; height: 12px; }
+/* a page with everything that sells: said as good news, not "nothing left" (Daria, 27.09) */
+.add-done { display: flex; gap: 10px; align-items: flex-start; margin: 2px 2px 8px; padding: 10px 12px; border-radius: var(--radius-lg); background: var(--color-fg-success-tertiary, var(--color-fg-secondary)); }
+.add-done > svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; color: var(--color-text-success-primary); }
+.add-done span { display: flex; flex-direction: column; gap: 2px; font: 400 14px/20px var(--font-sans); color: var(--color-text-secondary); }
+.add-done b { font: 600 14px/20px var(--font-sans); color: var(--color-text-primary); }
+.dev-menu .ag-menu__item svg { width: 18px; height: 18px; color: var(--color-text-tertiary); }
+
+/* ---- hub page = the customer's game theme (raw colors allowed) ----
+   Type is set for the real width of the page (Daria, 27.09: micro type looked cheap). A desktop page is 1280 wide and
+   shown scaled down, so its type is a real website's — 16px body, big headings; a phone gets a phone's sizes.
+   --hf text · --hp primary · --ha accent · --hs surface — set by the look on the frame. */
+.hub-frame { --fs-body: 15px; --fs-small: 13px; --fs-name: 15px; --fs-price: 16px; --fs-kick: 12px; --fs-nav: 14px; --fs-sub: 22px; --fs-h: 30px; --fs-hero: 44px; --fs-btn: 14px; --btn-h: 38px; --btn-h-lg: 46px;
+  position: relative; margin: 0 auto; border-radius: 10px; box-shadow: var(--shadow-xl); display: flex; flex-direction: column; padding-bottom: 28px;
+  color: var(--hf); font: 400 var(--fs-body)/1.45 var(--font-sans); }
+.hub-frame--desktop { --fs-body: 17px; --fs-small: 15px; --fs-name: 18px; --fs-price: 19px; --fs-kick: 14px; --fs-nav: 16px; --fs-sub: 30px; --fs-h: 44px; --fs-hero: 68px; --fs-btn: 16px; --btn-h: 46px; --btn-h-lg: 56px; }
+.hub-frame--phone { --fs-body: 14px; --fs-small: 12px; --fs-name: 14px; --fs-price: 15px; --fs-kick: 11px; --fs-nav: 14px; --fs-sub: 20px; --fs-h: 24px; --fs-hero: 30px; --fs-btn: 14px; --btn-h: 36px; --btn-h-lg: 42px;
+  border-radius: 22px; min-height: 740px; }
+.hub-frame--tablet { min-height: 1024px; }
+.hub-frame--phone, .hub-frame--tablet { box-shadow: 0 0 0 1px var(--color-border-secondary), var(--shadow-xl); }   /* a screen on the grey field: a hairline and a shadow show its edge */
+.hub-frame.is-fill { flex: none; margin: 0; border-radius: 0; box-shadow: none; padding-bottom: 110px; }   /* the last row stays clear of the bar */
+.hub-frame.is-fill .hub-head { border-radius: 0; }
+.hub-mute { color: color-mix(in srgb, var(--hf) 64%, transparent); }
+.hub-head { position: relative; height: 52px; display: flex; align-items: center; gap: 28px; padding: 0 var(--hd-pad); background: color-mix(in srgb, var(--hf) 5%, transparent);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--hf) 10%, transparent); border-radius: 10px 10px 0 0; }
+.hub-frame--phone .hub-head { border-radius: 22px 22px 0 0; gap: 12px; }
+.hub-head b { font-size: calc(var(--fs-nav) + 2px); line-height: 1; white-space: nowrap; }
+.hub-head .nl { font-size: var(--fs-nav); font-weight: 500; color: color-mix(in srgb, var(--hf) 62%, transparent); white-space: nowrap; }
+.hub-head .nl.is-cur { color: var(--hf); }
+.hub-head > b, .hub-head__act { flex-shrink: 0; }
+.hub-head__nav { display: flex; gap: 24px; min-width: 0; overflow: hidden; }   /* a wide font: the menu gives way, the buttons stay in */
+.hub-head__gap { flex: 1; min-width: 0; }
+.hub-head__act { display: flex; align-items: center; gap: 10px; }
+.hub-burger { display: flex; flex-direction: column; gap: 4px; padding: 4px 0 4px 6px; }
+.hub-burger i { width: 18px; height: 2px; border-radius: 2px; background: currentColor; }
+
+.hbtn { height: var(--btn-h); padding: 0 18px; border-radius: 7px; font-size: var(--fs-btn); font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.hbtn--sm { height: calc(var(--btn-h) - 8px); padding: 0 14px; font-size: calc(var(--fs-btn) - 1px); }
+.hbtn--ghost { color: var(--hf); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--hf) 35%, transparent); background: transparent; }
+.hub-sec { display: flex; flex-direction: column; gap: calc(var(--hd-gap) * 2 + 8px); padding: var(--hd-pad); }
+.hub-block { position: relative; display: flex; flex-direction: column; gap: calc(var(--hd-gap) + 4px); }
+.hub-h { font-size: var(--fs-h); line-height: 1.1; }
+.hub-sub { font-size: var(--fs-sub); line-height: 1.15; }
+.hub-text__p { margin: 0; max-width: 64ch; font-size: var(--fs-body); line-height: 1.55; }
+.hub-text--card { padding: calc(var(--hd-pad) + 4px); }
+/* the banner: text on the left, the art on the right; the art is drawn from the look (shapes, pattern, glow) */
+.hero { position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: calc(var(--hd-pad) * 1.6); }
+.hero__txt { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; max-width: 56%; }
+.hero--split { flex-direction: row; align-items: stretch; gap: calc(var(--hd-gap) * 2); padding: calc(var(--hd-pad) * 1.2); }
+.hero--split .hero__txt { flex: 1; justify-content: center; max-width: none; padding: calc(var(--hd-pad) * .6); }
+.hero--split .hero__art { position: relative; width: 44%; flex-shrink: 0; overflow: hidden; }
+.hero--band { flex-direction: row; align-items: center; justify-content: flex-start; gap: calc(var(--hd-gap) * 2); }
+.hero--band .hero__txt { flex: 1; max-width: none; gap: 4px; }
+.hero--band .hero__icon { width: 18%; max-width: 120px; aspect-ratio: 1; flex-shrink: 0; }
+.hero small { font-size: var(--fs-kick); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.hero b { font-size: var(--fs-hero); line-height: 1.02; }
+.hero--band b { font-size: calc(var(--fs-hero) * .6); }
+.hero__sub { font-size: calc(var(--fs-body) + 1px); color: color-mix(in srgb, var(--hf) 78%, transparent); }
+.hero .hbtn { margin-top: 8px; height: var(--btn-h-lg); padding: 0 26px; font-size: calc(var(--fs-btn) + 1px); }
+.hero--band .hbtn { margin-top: 0; }
+.hero__cluster { position: absolute; right: 5%; top: 50%; width: 36%; aspect-ratio: 1.25; transform: translateY(-50%); }
+.hero--split .hero__cluster { right: 8%; left: 8%; width: auto; }
+.hero__cluster > svg { position: absolute; }
+.hero__cluster > svg:nth-child(1) { width: 58%; left: 20%; top: 16%; }
+.hero__cluster > svg:nth-child(2) { width: 30%; right: 0; top: 0; }
+.hero__cluster > svg:nth-child(3) { width: 26%; left: 0; bottom: 2%; }
+/* item cards: the picture keeps its proportions whatever the width (Daria, 26.09 — it was stretching) */
+.cards { display: grid; gap: var(--hd-gap); }
+.cards--a-list { grid-template-columns: 1fr !important; }
+.cards-group { display: flex; flex-direction: column; gap: 10px; }
+.cards-group + .cards-group { margin-top: 10px; }
+.cards-group__h { font-size: var(--fs-kick); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in srgb, var(--hf) 60%, transparent); }
+.hcard__txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hcard { position: relative; display: flex; flex-direction: column; gap: 12px; }
+.hcard .art { position: relative; overflow: hidden; aspect-ratio: 5 / 4; display: grid; place-items: center; }
+.hcard .art > svg { width: 46%; max-width: 150px; height: auto; }
+.cards--big-cards .hcard .art { aspect-ratio: 4 / 3; }
+.hcard .art.none { background: transparent; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--hf) 22%, transparent); gap: 6px; align-content: center;
+  font-size: var(--fs-small); color: color-mix(in srgb, var(--hf) 50%, transparent); }
+.hcard .art.none svg { width: 28px; height: 28px; opacity: .7; }
+.hcard .nm { font-size: var(--fs-name); font-weight: 600; line-height: 1.25; }
+.hcard .sb { font-size: var(--fs-small); color: color-mix(in srgb, var(--hf) 62%, transparent); }
+.hcard .nm .rib { position: static; display: inline-block; margin-left: 8px; vertical-align: 2px; }
+.hcard .rib { position: absolute; top: 10px; left: 10px; padding: 3px 8px; border-radius: 5px; font-size: var(--fs-kick); font-weight: 800; letter-spacing: .04em; }
+.hcard__row { display: flex; align-items: flex-end; gap: 10px; }
+.hcard__row .hcard__txt { flex: 1; }
+.hcard__price { font-size: var(--fs-price); font-weight: 800; white-space: nowrap; }
+.hcard .hbtn { width: 100%; }
+.hcard--s2 { text-align: center; }
+.hcard--s2 .hcard__txt { align-items: center; }
+.cards--a-list .hcard { flex-direction: row; align-items: center; gap: 16px; text-align: left; }
+.cards--a-list .hcard .art { aspect-ratio: 1; flex-shrink: 0; }
+.cards--a-list .hcard .art > svg { width: 60%; }
+.cards--a-list .hcard .hcard__txt { flex: 1; min-width: 0; align-items: flex-start; }
+.cards--a-list .hcard .hbtn { width: auto; }
+.cards--a-list .hcard .hbtn, .cards--a-list .hcard__price { flex-shrink: 0; }
+.cats { display: flex; flex-wrap: wrap; gap: 8px; } .cats span { height: calc(var(--btn-h) - 6px); padding: 0 16px; border-radius: 999px; font-size: var(--fs-small); font-weight: 600; display: flex; align-items: center; }
+/* news */
+.news2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--hd-gap); }
+.newslist { display: flex; flex-direction: column; gap: var(--hd-gap); }
+.ncard { display: flex; flex-direction: column; gap: 14px; }
+.newslist .ncard { flex-direction: row; gap: 18px; align-items: center; }
+.ncard__txt { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ncard__t { font-size: calc(var(--fs-name) + 1px); font-weight: 600; line-height: 1.3; }
+.ncard__d { font-size: var(--fs-small); color: color-mix(in srgb, var(--hf) 58%, transparent); }
+.ncard .img { position: relative; overflow: hidden; flex-shrink: 0; display: grid; place-items: center; }
+.ncard .img > svg { width: 22%; min-width: 34px; max-width: 72px; height: auto; }
+.newslist .ncard .img { width: 30%; max-width: 220px; }
+.kick { font-size: var(--fs-kick); font-weight: 700; letter-spacing: .08em; }
+/* daily rewards: the layout is the block's, the tile is the card's */
+.days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--hd-gap); }
+.days--grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.days--grid .day:last-child { grid-column: span 2; }   /* 4 + 3: day 7 takes the empty cell, no hole in the grid */
+.days--spot { grid-template-columns: repeat(3, minmax(0, 1fr)) 1.4fr; }
+.days--spot .day:last-child { grid-column: 4; grid-row: 1 / 3; height: auto; }
+.day { position: relative; overflow: hidden; height: var(--hd-day, 110px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  font-size: var(--fs-small); font-weight: 600; text-align: center; padding: 8px; }
+.day__l { font-size: var(--fs-kick); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in srgb, var(--hf) 55%, transparent); }
+.day > svg { width: 30%; max-width: 44px; height: auto; flex-shrink: 0; }
+.day__n { font-size: calc(var(--fs-sub) * 1.2); line-height: 1; }
+.day__stamp { width: 2.4em; height: 2.4em; flex-shrink: 0; border-radius: 9999px; border: 2px solid currentColor; display: grid; place-items: center; font-size: var(--fs-name); font-weight: 800; }
+.days--spot .day:last-child > svg { width: 34%; max-width: 88px; }
+.days--spot .day:last-child .day__n { font-size: calc(var(--fs-hero) * .8); }
+.board { padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+.board__h { font-size: var(--fs-name); font-weight: 700; }
+.board div { display: flex; gap: 14px; font-size: var(--fs-body); } .board div span:nth-child(2) { flex: 1; }
+.board div span:nth-child(3) { color: color-mix(in srgb, var(--hf) 62%, transparent); font-variant-numeric: tabular-nums; }
+/* the leaderboard block on Home: a table or a podium of the top 3 */
+.podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--hd-gap); align-items: end; }
+.podium div { padding: 18px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: var(--fs-body); font-weight: 600; }
+.podium b { font-size: calc(var(--fs-h) * 1.1); line-height: 1; }
+.podium small { font-size: var(--fs-small); font-weight: 400; color: color-mix(in srgb, var(--hf) 60%, transparent); }
+.podium div:nth-child(2) { padding-top: 40px; }
+.loginbox { width: 400px; margin: 24px auto; padding: 28px; display: flex; flex-direction: column; gap: 16px; }
+.hub-frame--desktop .loginbox { width: 460px; }
+.loginbox .fld { height: var(--btn-h); border-radius: 8px; background: color-mix(in srgb, var(--hf) 8%, transparent); color: color-mix(in srgb, var(--hf) 50%, transparent); display: flex; align-items: center; padding: 0 14px; }
+.loginbox__hint { font-size: var(--fs-small); line-height: 1.5; color: color-mix(in srgb, var(--hf) 72%, transparent); }
+.loginbox__pic { position: relative; overflow: hidden; height: 120px; border-radius: 8px; }
+/* the same hub on a phone: one column where it has to be, the menu behind a burger */
+.hub-frame--phone .hero__txt { max-width: 62%; }
+.hub-frame--phone .hero__cluster { width: 40%; right: 2%; }
+.hub-frame--phone .hero--split { flex-direction: column; }
+.hub-frame--phone .hero--split .hero__art { order: -1; width: 100%; height: 110px; }
+.hub-frame--phone .hero--band { flex-wrap: wrap; }
+.hub-frame--phone .news2 { grid-template-columns: 1fr; }
+.hub-frame--phone .newslist .ncard .img { width: 34%; }
+/* seven days in a row on a phone: a strip that scrolls sideways, as game stores do — no hole in a grid */
+.hub-frame--phone .days:not(.days--grid):not(.days--spot) { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 29%; overflow: hidden; }
+.hub-frame--phone .days--grid, .hub-frame--phone .days--spot { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.hub-frame--phone .days--grid .day:last-child { grid-column: 1 / -1; }
+.hub-frame--phone .days--spot .day:last-child { grid-column: 1 / -1; grid-row: auto; height: var(--hd-day, 110px); flex-direction: row; gap: 14px; }   /* the wide day 7 on a phone reads in one line */
+.hub-frame--phone .days--spot .day:last-child > svg { width: 38px; }
+.hub-frame--phone .days--spot .day:last-child .day__n { font-size: 30px; }
+.hub-frame--phone .loginbox { width: auto; margin: 8px 0; padding: 20px; }
+/* Selection on the canvas (dashboard UI), two levels like Figma (Daria, 26.09): the first click takes the whole
+   block; once it's selected, a click on a card inside takes the cards — what you do then applies to all of them. */
+.pick { cursor: pointer; }
+.pick:hover { outline: 2px dashed var(--color-fg-brand-primary-hover); outline-offset: 8px; }   /* hover — clearly visible, with room round the block (Daria, 28.09) */
+.pick.is-sel { outline: none; }   /* the border is its own layer (renderSel) */
+/* the selection is a shining border (Daria, 28.09, after Magic UI's Shine Border): Newton's light blue, glowing, with a glint of
+   his colours travelling round it; a little away from the block. It's its own layer over the canvas (renderSel), not part of
+   the block — a banner or a reward tile clips what sticks out of it, and the border and the Newton mark were cut. */
+.sel-ring { position: absolute; z-index: 23; pointer-events: none; padding: 3px;
+  background: radial-gradient(transparent, transparent, var(--color-fg-pink-primary), var(--color-text-inverse), var(--color-fg-brand-primary-hover), transparent, transparent) 0 0 / 250% 250%,
+    linear-gradient(var(--color-fg-brand-primary-hover), var(--color-fg-brand-primary-hover));
+  -webkit-mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  filter: drop-shadow(0 0 6px var(--color-fg-brand-primary-hover)) drop-shadow(0 0 10px var(--color-fg-pink-primary));
+  animation: hub-shine 4.5s linear infinite; }
+.sel-ring__ai { position: absolute; z-index: 24; pointer-events: none; width: 24px; height: 24px; border-radius: 9999px; background: var(--color-fg-primary); box-shadow: var(--shadow-md); display: grid; place-items: center; }
+.sel-ring__ai .ai-ico { width: 14px; height: 14px; }
+#stage .sel-ai { display: none; }   /* the Newton mark rides on the border layer, where nothing cuts it */
+@keyframes hub-shine { 0% { background-position: 0% 0%, 0 0; } 50% { background-position: 100% 100%, 0 0; } 100% { background-position: 0% 0%, 0 0; } }
+@media (prefers-reduced-motion: reduce) { .sel-ring { animation: none; } }
+.hub-head.pick:hover { outline-offset: -4px; }   /* the header touches the window's edge: the outline goes inside */
+.hub-block.is-open [data-el$=":item"] { cursor: pointer; }
+.hub-block.is-open [data-el$=":item"]:hover { outline: 1px dashed var(--color-border-brand); outline-offset: 2px; }
+[data-el$=":item"].is-sel { outline: none; }
+/* preview mode (?embed=desktop|phone): only the hub, edge to edge, nothing to click */
+.is-embed .app__header, .is-embed .app__chat, .is-embed .hub-tools, .is-embed .ctx { display: none !important; }
+.is-embed .app, .is-embed .app__body, .is-embed .app__pane { padding: 0; gap: 0; border-radius: 0; background: none; }
+.is-embed .canvas, .is-embed .canvas--framed { padding: 0; overflow: hidden; }
+.is-full .canvas, .is-full .canvas--framed { overflow: auto; }   /* the preview tab scrolls like the site */
+.is-embed #stage { pointer-events: none; }
+.is-embed .hub-frame, .is-embed .hub-frame--phone, .is-embed .hub-frame--phone .hub-head { border-radius: 0; box-shadow: none; }
+.is-embed .hub-frame--phone { min-height: 100vh; }
+/* dragging a block on Home (Daria, 27.09): it fades where it was, a line shows where it will land */
+.hub-sec > .pick.is-sel:not(.is-kept) { cursor: grab; }
+.hub-sec > .is-dragging { opacity: .35; }
+.dropline { position: absolute; z-index: 26; height: 4px; border-radius: 4px; background: var(--color-fg-brand-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-fg-brand-primary) 25%, transparent); pointer-events: none; }
+.canvas.is-dragging, .canvas.is-dragging * { cursor: grabbing !important; user-select: none; }
+.kept { position: absolute; top: 8px; right: 8px; z-index: 4; width: 22px; height: 22px; border-radius: 9999px; background: rgba(0, 0, 0, .45); color: #FFFFFF; display: grid; place-items: center; }
+.kept svg { width: 12px; height: 12px; }
+.hub-head .kept { top: 50%; transform: translateY(-50%); }
+.hub-block > .kept { top: 4px; right: 0; }
+.sel-ai { position: absolute; top: -12px; right: -12px; z-index: 6; width: 24px; height: 24px; border-radius: 9999px; background: var(--color-fg-primary); box-shadow: var(--shadow-md); display: grid; place-items: center; }
+.draftbar { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-radius: 10px; background: var(--color-fg-primary); color: var(--color-text-primary); font: 600 14px/20px var(--font-sans); }
+.draftbar span, .hero .draftbar span { flex: 1; color: var(--color-text-primary); }
+</style>
+</head>
+<body>
+<div class="app app--fixed">
+  <header class="app__header" id="app-header"></header>
+  <div class="app__body">
+    <main class="hub-center" id="center">
+      <div class="hub-tools" id="tools"></div>
+      <div class="canvas" id="canvas" data-h="canvas" data-magic-host><div id="stage" data-h="canvas"></div><div class="ctx" id="ctx" hidden></div></div>
+    </main>
+    <aside class="app__chat" id="nw-chat" aria-label="Newton"></aside>
+  </div>
+</div>
+
+<script src="app/app.js?v=78fca03"></script>
+<script src="app/chat.js?v=78fca03"></script>
+<script src="app/newton.js?v=78fca03"></script>
+<script src="app/hub-icons.js?v=78fca03"></script>
+<script src="app/hub-skin.js?v=78fca03"></script>
+<script>
+(() => {
+  const { $, $$, icon, nwIcon } = AG;
+
+  /* ---------- state of the editor (this page only) ---------- */
+  const PAGES = [['home', 'Home', '/'], ['store', 'Store', '/store'], ['rewards', 'Daily rewards', '/daily-rewards'], ['news', 'News', '/news'], ['leaders', 'Leaderboards', '/leaderboards'], ['login', 'Login', '/login']];
+  /* see the hub the way players will: it adapts, it isn't just scaled (Daria, 26.09).
+     w — the width the page is laid out at. Desktop fills the window: 1280 scaled to fit, so its proportions hold;
+     Phone and Tablet keep their real width on a dark field. */
+  const DEVICES = { phone: { w: 375, label: 'Phone', icon: 'phone', note: '375' }, tablet: { w: 768, label: 'Tablet', icon: 'tablet', note: '768' }, desktop: { w: 1280, label: 'Desktop', icon: 'desktop', note: '1280', fill: true } };
+  /* The look the dice rolls (handoff 5.4). Blocks and their cards (Daria, 26.09): a block has its layout
+     (head, hero, cards, rewards, news), a card has its style (card, day, newsCard); group — store picks by category.
+     Sizes: 1–5 steps; rows — how many rows of store picks (1–3); newsN — how many news on Home (2–4). */
+  const LOOK0 = { accent: 'sales', pal: 0, font: 0, art: 0, bg: 0, deco: 0, surf: 0, btn: 0, rad: 10, hfx: 0, heroArt: 0, mono: 0, set: 0, head: 0, hero: 0, cards: 0, news: 0, rewards: 0, card: 0, day: 0, newsCard: 0, group: 0, leaders: 0, text: 0 };
+  /* the blocks of Home, in order (Daria, 26.09): a block can be taken off with − and put back with + */
+  const BLOCKS0 = ['hero', 'cards', 'rewards', 'news'];
+  const HOME_BLOCKS = ['hero', 'cards', 'rewards', 'news', 'leaders'];
+  /* Every page is a list of blocks (Daria, 27.09). A page's own block ('main': the store, the gifts, the news, the boards,
+     the login form) stays; around it + adds the blocks that suit the page (FIT) — the universal ones (banner, text) and
+     the others the page doesn't already have. REC — what sells best on the page: Newton marks it, Decide for me adds it. */
+  const FIT = { home: ['hero', 'text', 'cards', 'rewards', 'news', 'leaders'], store: ['hero', 'text', 'rewards', 'leaders'], rewards: ['hero', 'text', 'cards', 'leaders'],
+    news: ['hero', 'text', 'cards', 'rewards'], leaders: ['hero', 'text', 'cards', 'rewards'], login: ['hero', 'text'] };
+  const REC = { home: ['hero', 'cards', 'rewards', 'news'], store: ['hero'], rewards: ['cards'], news: ['cards'], leaders: ['rewards'], login: ['text'] };
+  const PAGE0 = { store: ['main'], rewards: ['main'], news: ['main'], leaders: ['main'], login: ['main'] };
+  const MAIN_EL = { store: 'cards', rewards: 'rewards', news: 'news' };   // the page's own block as it's selected on the canvas
+  const SIZES0 = { page: 3, header: 3, hero: 3, cards: 3, news: 3, rewards: 3, rows: 1, newsN: 2 };
+  const RANGE = { rows: [1, 3], newsN: [2, 4] };
+  const start = location.hash.slice(1);
+  const H = {
+    page: PAGES.some((p) => p[0] === start) ? start : 'home', sel: null, device: 'desktop',
+    look: { ...LOOK0 },   // Newton has already decided — nothing to pick on arrival
+    sizes: { ...SIZES0 },
+    blocks: BLOCKS0.slice(),
+    locks: {}, frozen: {}, past: [], future: [],   // a locked element keeps the look it had — the dice goes around it; past / future — Undo / Redo
+    hero: 'base', heroSeed: 0, heroOffer: 0, artSeed: {}, quickStore: true,
+    hidden: {}, cats: { Gems: true, Heroes: true, Chests: true, Energy: true }, boards: { b7: true, ball: true },
+    pubArt: {}, loginText: '', edits: {}, changes: 0, pubDepth: 0, pageBlocks: JSON.parse(JSON.stringify(PAGE0)),
+    fx: null   // where the magic plays after the next draw
+  };
+  /* the look survives leaving the mode: Newton switches to Hub mid-event and back */
+  (() => { const k = AG.state.hub; if (k) { H.look = { ...LOOK0, ...k.look }; H.sizes = { ...SIZES0, ...k.sizes }; H.locks = k.locks || {}; H.frozen = k.frozen || {}; if (Array.isArray(k.blocks)) H.blocks = k.blocks; if (k.pageBlocks) H.pageBlocks = Object.assign(JSON.parse(JSON.stringify(PAGE0)), k.pageBlocks); if (DEVICES[k.device]) H.device = k.device; } })();
+  /* a preview inside a laptop or a phone mock-up (onboarding, 27.09): Hub.html itself, only the hub page, no editor
+     around it, nothing clickable, nothing saved — so the preview is always the real hub in the styles picked */
+  const EMBED = new URLSearchParams(location.search).get('embed');
+  if (EMBED) { H.device = DEVICES[EMBED] ? EMBED : 'desktop'; H.page = new URLSearchParams(location.search).get('page') || 'home'; document.documentElement.classList.add('is-embed'); }
+  /* full=1: the preview tab — the whole page, scrolling, named like the hub */
+  if (EMBED && new URLSearchParams(location.search).get('full')) { document.documentElement.classList.add('is-full'); document.title = 'Pixel Raiders · pixelraiders.aghanim.store'; }
+  const keepLook = () => AG.save({ hub: { look: H.look, sizes: H.sizes, locks: H.locks, frozen: H.frozen, blocks: H.blocks, pageBlocks: H.pageBlocks, device: H.device } });
+  /* the blocks of a page, in order: Home has its own list (H.blocks), every other page keeps 'main' in its list */
+  const listOf = (p = H.page) => (p === 'home' ? H.blocks : H.pageBlocks[p] || ['main']);
+  const setList = (list, p = H.page) => { if (p === 'home') H.blocks = list; else H.pageBlocks[p] = list; };
+  const posOf = (id, p = H.page) => listOf(p).indexOf(id && MAIN_EL[p] === id ? 'main' : id);
+
+  /* the look's palettes, fonts, grounds, cards, buttons and icons live in app/hub-skin.js (shared with the chat and the previews) */
+  const { PALETTES, FONTS, ARTS, BGS, DECOS, SURFS, BTNS, HFX, HERO_ART, TAG_TRAITS, typeCss, hexA, shade, tint, svgUrl, decoBg, withDeco,
+    bgCss, surf, hbtn, KIND, artSvg, rewardKind } = AG.skin;
+  const CARD_NAME = ['cards in a row', 'big cards', 'a list'];
+  const GAP = [8, 11, 14, 18, 22], PAD = [14, 17, 20, 24, 28], RAD = [4, 7, 10, 14, 18];
+  const tagsNow = () => AG.style().tags;
+  const anyOf = (list) => list[Math.floor(Math.random() * list.length)];
+  /* the look from the tags (the rule — AG.skin.dealt): every tag on the list shows, the art goes to the tag picked last */
+  const tagTraits = () => tagsNow().map((t) => TAG_TRAITS[t]).filter(Boolean);
+  const dealt = () => AG.skin.dealt(tagsNow());
+  const tagPals = () => AG.skin.tagPals(tagsNow());
+  /* the look drawn by the tags: every trait, and the first palette they suit */
+  const fitToStyles = (L) => {
+    if (!tagTraits().length) return;   // no tags on: the hub keeps how it looks
+    Object.assign(L, dealt());
+  };
+  if (!AG.state.hub || !AG.state.hub.look || AG.state.hub.look.btn == null) fitToStyles(H.look);
+
+  /* what is being drawn right now: the canvas, or a page preview in the page picker */
+  const V = { page: H.page, dev: H.device, thumb: false };
+
+  /* a locked part reads its look from the snapshot taken when it was locked */
+  const lookOf = (key) => { const f = H.frozen[key]; return f ? { look: { ...LOOK0, ...f.look }, sizes: { ...SIZES0, ...f.sizes } } : { look: H.look, sizes: H.sizes }; };
+  const skinOf = (key) => AG.skin.skinFrom(lookOf(key).look);
+  const palOf = (key) => skinOf(key).c;
+  const sizeOf = (key, lead) => Math.min(5, lookOf(key).sizes[key] + (lead ? 1 : 0));
+  const radOf = (key) => { const w = skinOf(key).w; return w.rad != null ? Math.round(w.rad * (desk() ? 1.2 : 1)) : RAD[lookOf(key).sizes.page - 1]; };   // the world's corners
+  const fontOf = (key) => { const sk = skinOf(key), h = sk.w.head(sk.c); return `${typeCss(sk.t)}${h ? ';' + h : ''}`; };
+  const col = () => PALETTES[H.look.pal % PALETTES.length];
+  const phone = () => V.dev === 'phone';
+  const desk = () => V.dev === 'desktop';
+
+  const NO_IMG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m3 16 5-5 4 4 3-3 6 6"/><circle cx="15.5" cy="9" r="1.5"/></svg>';
+  const OFFERS = [{ title: 'Starter Pack', sub: '500 gems · 3 hero shards', price: '$4.99', kicker: 'LIMITED OFFER' }, { title: 'Gem Hoard', sub: '1,200 gems · 2 hero shards', price: '$9.99', kicker: 'BEST VALUE' }];
+  const HERO_BG = { base: ['#3A2A7A', '#24406A', '#5A2A6A'], hw: ['#4A1F0E', '#2B1A3D', '#3D2308'] };
+  // News: only from real sources. Newton writes from App Store "What's new", never invents events (handoff 6.6)
+  const ARTICLES = [
+    { id: 'a1', title: 'Season 3 patch notes', cat: 'Update', src: 'RSS · game site', pub: true, date: 'Sep 20' },
+    { id: 'a2', title: 'Guild wars weekend', cat: 'Event', src: 'Discord', pub: true, date: 'Sep 18' },
+    { id: 'a4', title: 'New hero: Frost Warden', cat: 'Update', src: 'App Store notes', newton: true, date: 'Sep 24' },
+    { id: 'a7', title: 'Arena 9 is open', cat: 'Update', src: 'App Store notes', newton: true, date: 'Sep 16' },
+    { id: 'a8', title: 'Faster matchmaking', cat: 'Update', src: 'App Store notes', newton: true, date: 'Sep 9' },
+    { id: 'a9', title: 'Bug fixes and stability', cat: 'Update', src: 'App Store notes', newton: true, date: 'Sep 2' },
+    { id: 'a5', title: 'Community art contest winners', cat: 'Community', src: 'Discord', pub: true, date: 'Sep 12' },
+    { id: 'a6', title: 'Autumn login bonus', cat: 'Event', src: 'You', date: '' }
+  ];
+  const isPub = (a) => a.pub || H.pubArt[a.id] || (a.newton && AG.state.published);
+  const BOARDS = [['b7', 'Most played last 7 days'], ['ball', 'Most played overall']];
+  const PLAYERS = [['1', 'NightRaven', '12,480'], ['2', 'Kira_07', '11,902'], ['3', 'MadGolem', '10,355']];
+  const LOGIN_SUGGEST = 'Open Pixel Raiders, tap your avatar in the top-left corner. Your Player ID is the 9-digit number under your name.';
+  /* the same 7 days as Dashboard → Daily rewards: day 7 follows what was done there (the Gold Chest, or its replacement) */
+  const REWARDS_OF = () => ['50 gems', '100 energy', '100 gems', '1 hero shard', '150 gems', '200 energy',
+    AG.state.applied.day7 ? 'Legendary Shard' : AG.state.applied.day7gems ? '500 gems' : 'Gold Chest'];
+
+  /* ---------- selection: a block ('cards', 'rewards', 'news', 'hero', 'header') or its cards ('cards:item' …) ---------- */
+  const selId = () => (!V.thumb ? H.sel : null);
+  const blockOf = (id) => (id ? id.split(':')[0] : null);
+  const isItems = (id) => !!id && id.endsWith(':item');
+  const blockCls = (k) => { const s = selId(); return `pick${s === k ? ' is-sel' : ''}${s === k || s === k + ':item' ? ' is-open' : ''}`; };
+  const itemCls = (k) => (selId() === k + ':item' ? ' is-sel' : '');
+  // Newton's mark: shown on a selected block only while it is fully generated (handoff 6.8)
+  const genByNewton = (id) => (H.edits[id] ? false : id === 'hero' ? AG.byNewton('offer') : true);
+  /* unpublished changes; pubDepth — where the history stood at the last publish, so Undo back to it counts down, not up */
+  const changed = (n = 1) => { H.changes = Math.max(0, H.changes + n); };
+
+  /* ---------- header ---------- */
+  function renderHeader() {
+    const can = AG.canPublish(), pub = AG.state.published;
+    /* the publish state, quietly (Daria, 27.09): unpublished changes come with the reassurance that nothing is live yet */
+    const note = !can ? `${AG.publishBlocker ? AG.publishBlocker() : 'Publishing opens after company verification'}` : !pub ? 'Not live yet · only you see it' : H.changes ? `${H.changes} change${H.changes > 1 ? 's' : ''} · live once you publish` : 'All changes are live';
+    AG.mountHeader('hub', '',
+      `<span class="hdr-note">${note}</span>
+       <div class="hdr-bar">
+         <button class="ag-btn ag-btn--outline" data-h="preview">${icon('play')}Preview</button>
+         <button class="ag-btn ag-btn--primary" data-h="publish" ${can && (!pub || H.changes) ? '' : 'disabled'} title="${can ? '' : AG.publishBlocker()}">Publish</button>
+       </div>`);
+    const h = $('#app-header');
+    /* Preview: this page on this device, as players see it — no selection, no bar, nothing to click (Daria, 27.09) */
+    /* Preview (Daria, 27.09): the hub in a tab of its own, full size, as a player opens it (clicks inside come later) */
+    h.querySelector('[data-h="preview"]').addEventListener('click', () => { keepLook(); window.open(`Hub.html?embed=${H.device}&page=${H.page}&full=1`, '_blank'); });
+    h.querySelector('[data-h="publish"]').addEventListener('click', () => { H.changes = 0; H.pubDepth = H.past.length; AG.save({ published: true }); AG.newton.published(); });
+  }
+
+  /* ---------- the bar at the bottom: which page, which device (Daria, 26.09 — instead of the page list) ---------- */
+  const storeFlag = () => AG.items.some((i) => !AG.hasImage(i) || !i.sku);   // items without an image or not linked to the game
+  function pagesMenu() {
+    const keep = { ...V };
+    const rows = PAGES.map(([k, l, url], i) => {
+      Object.assign(V, { page: k, dev: 'desktop', thumb: true });
+      const frame = frameHTML();
+      return `<div class="pg-item${H.page === k ? ' is-cur' : ''}${H.hidden[k] ? ' is-hidden' : ''}">
+        <button class="pg-item__pick" role="menuitem" data-pg="${k}">
+          <span class="pg-thumb" style="background:${col().bg}"><span style="display:block;zoom:${(112 / DEVICES.desktop.w).toFixed(4)}">${frame}</span></span>
+          <span class="pg-item__txt"><b>${i + 1}. ${l}${k === 'store' && storeFlag() ? '<span class="pg-dot" title="Needs attention"></span>' : ''}</b><span>${H.hidden[k] ? 'Hidden from the hub' : url}</span></span>
+        </button>
+        <button class="eye" data-eye="${k}" aria-label="${H.hidden[k] ? 'Show ' + l + ' on hub' : 'Hide ' + l + ' from hub'}" title="${H.hidden[k] ? 'Show on the hub' : 'Hide from the hub'}">${icon(H.hidden[k] ? 'eye-off' : 'eye')}</button>
+      </div>`;
+    }).join('');
+    Object.assign(V, keep);
+    return rows;
+  }
+  const devMenu = () => `<div class="text-section-label">Preview on</div>${Object.entries(DEVICES).map(([k, d]) => `<button class="ag-menu__item${H.device === k ? ' is-active' : ''}" role="menuitem" data-dev="${k}">${icon(d.icon)}${d.label}<kbd>${d.note}</kbd></button>`).join('')}`;
+  /* Styles: the tags from onboarding, same colours. Newton's picks sit in their own row, "Recommended" — no sticker on
+     the tag (Daria, 26.09: a star means "made by AI", a badge on a badge reads badly). At the bottom, quietly: a brand book. */
+  function stylesMenu() {
+    const T = AG.STYLE_TAGS, st = AG.style();
+    const tag = (t) => { const on = st.tags.includes(t);
+      return `<button class="tag tag--${T.color[t] || 'gray'}${on ? ' is-on' : ''}" data-sty="${t}" aria-pressed="${on}">${t}</button>`; };
+    const rest = T.near.concat(T.far);   // Recommended stays put: what Newton read from the store page
+    return `<div class="text-section-label">Recommended styles</div><div class="tagcloud">${T.picked.map(tag).join('')}</div>
+      <hr class="sty-menu__sep"><div class="text-section-label">All</div><div class="tagcloud">${rest.map(tag).join('')}</div>
+      <div class="sty-menu__foot"><button class="ag-btn ag-btn--primary ag-btn--sm ag-btn--block tip-up" data-proto-tip="Not in this prototype">Upload brand book</button></div>`;
+  }
+  /* + (Daria, 27.09): on every page — the blocks that suit it and aren't on it yet, each with a preview in the current look.
+     Newton marks what sells best here; while any of that is missing, Decide for me adds it all. A page with everything
+     that sells doesn't say "you've added everything" — it says the page is complete and working. */
+  function addMenu() {
+    const p = H.page, list = listOf(p), names = BLOCK_NAME();
+    const left = FIT[p].filter((k) => !list.includes(k)), recLeft = REC[p].filter((k) => !list.includes(k));
+    const done = `<div class="add-done">${icon('check')}<span><b>This page is complete</b>${left.length ? 'It has everything that sells. Add more if you like.' : 'Everything that sells is on it.'}</span></div>`;
+    if (!left.length) return done;
+    const keep = { ...V };
+    Object.assign(V, { page: 'home', dev: 'desktop', thumb: true });
+    const c = col(), d = H.sizes.page - 1;
+    const order = left.filter((k) => recLeft.includes(k)).concat(left.filter((k) => !recLeft.includes(k)));   // Newton's picks first
+    const rows = order.map((k) => `<div class="pg-item"><button class="pg-item__pick" role="menuitem" data-add="${k}">
+        <span class="pg-thumb" style="background:${c.bg}"><span style="display:block;zoom:${(112 / 900).toFixed(4)}"><div class="hub-frame" style="width:900px;background:${c.bg};--hd-gap:${GAP[d]}px;--hd-pad:${PAD[d]}px;--hd-radius:${RAD[d]}px;box-shadow:none;border-radius:0"><div class="hub-sec">${SECTION[k](false)}</div></div></span></span>
+        <span class="pg-item__txt"><b>${names[k]}${recLeft.includes(k) ? `<span class="add-rec">${nwIcon()}Recommended</span>` : ''}</b><span>${BLOCK_SUB[k]}</span></span></button></div>`).join('');
+    Object.assign(V, keep);
+    const head = recLeft.length
+      ? `<div class="add-head"><div class="text-section-label">Add a block${H.sel ? ' after the selected one' : ''}</div><button class="ag-btn ag-btn--primary ag-btn--ai ag-btn--sm cw-decide" data-add-decide>Decide for me${icon('spark')}</button></div>`
+      : `${done}<div class="text-section-label">Add a block${H.sel ? ' after the selected one' : ''}</div>`;
+    return head + rows;
+  }
+  function renderTools() {
+    const open = ['pages', 'devices', 'styles', 'add'].find((k) => $(`[data-menu="${k}"]:not([hidden])`)) || '';
+    const pg = PAGES.find((p) => p[0] === H.page), dev = DEVICES[H.device];
+    $('#tools').innerHTML = `
+      <div class="dd">
+        <button class="ag-select hub-pick" data-dd-hub="pages" aria-haspopup="menu" aria-expanded="${open === 'pages'}" aria-label="Page: ${pg[1]}"><span>${pg[1]}</span>${icon('chev')}</button>
+        <div class="ag-menu dd__menu pg-menu" data-menu="pages" role="menu"${open === 'pages' ? '' : ' hidden'}>${open === 'pages' ? pagesMenu() : ''}</div>
+      </div>
+      <div class="dd">
+        <button class="ag-btn ag-btn--outline ag-btn--icon hub-dev" data-dd-hub="devices" aria-haspopup="menu" aria-expanded="${open === 'devices'}" aria-label="Preview on: ${dev.label}" data-tip="Preview on: ${dev.label}">${icon(dev.icon)}</button>
+        <div class="ag-menu dd__menu dev-menu" data-menu="devices" role="menu"${open === 'devices' ? '' : ' hidden'}>${devMenu()}</div>
+      </div>${toolsHTML()}`;
+  }
+  function toggleMenu(k) {
+    const m = $(`[data-menu="${k}"]`), b = $(`[data-dd-hub="${k}"]`), open = m.hidden;
+    AG.closeMenus();
+    if (open && k === 'pages') m.innerHTML = pagesMenu();
+    if (open && k === 'add') m.innerHTML = addMenu();   // previews are drawn when you open it — they follow the look
+    m.hidden = !open; b.setAttribute('aria-expanded', String(open));
+  }
+
+  /* ---------- canvas ---------- */
+  const selAi = (id) => (selId() === id && genByNewton(id) ? `<span class="sel-ai" title="Made by Newton">${nwIcon()}</span>` : '');
+  /* a kept part shows it quietly, so it is clear why the dice went around it */
+  const keptMark = (key) => (H.locks[key] ? `<span class="kept" title="Kept — the dice goes around it">${icon('lock')}</span>` : '');
+
+  /* item cards — the block decides the layout (row / big / list), grouping and how many rows;
+     the card decides its style (price button / price tag / ribbon) and size (how many in a row) */
+  function cardsHTML(withSub, lead, all) {
+    const src = lookOf('cards'), sk = skinOf('cards'), c = sk.c, v = src.look.cards % 3, s = src.look.card % 3, size = sizeOf('cards', lead), rad = radOf('cards');
+    const base = v === 2 ? 1 : (v === 1 ? [4, 3, 3, 2, 2] : [5, 4, 4, 3, 3])[size - 1];
+    /* the same cards on another screen: two in a row on a phone */
+    const cols = v === 2 ? 1 : phone() ? 2 : base;
+    const rows = src.sizes.rows;
+    const listArt = (desk() ? [72, 84, 96, 112, 128] : [48, 56, 64, 76, 88])[size - 1];
+    const pad = Math.round([10, 12, 14, 16, 18][size - 1] * (desk() ? 1.3 : 1));
+    const artRad = Math.max(sk.art === 3 ? 0 : 3, rad - 4);
+    const card = (it) => {
+      const kind = KIND[it.cat] || 'gem';
+      const rib = `<span class="rib" style="background:${c.accent};color:${c.light ? '#FFFFFF' : c.bg}">${it.badge || 'NEW'}</span>`;   // in a list it sits by the name, not over the small picture
+      const art = AG.hasImage(it)
+        ? `<div class="art" style="border-radius:${artRad}px;background:${withDeco(sk, c.fg, c.light ? .07 : .06, sk.art === 1 ? `radial-gradient(circle at 50% 55%, ${hexA(c.accent, .35)}, transparent 70%), ${hexA(c.fg, c.light ? .04 : .05)}` : hexA(c.fg, c.light ? .04 : .05))};${v === 2 ? `width:${listArt}px` : ''}">${artSvg(kind, sk)}${s === 2 && v !== 2 ? rib : ''}</div>`
+        : `<div class="art none" style="border-radius:${artRad}px;${v === 2 ? `width:${listArt}px` : ''}">${NO_IMG}${v === 2 ? '' : 'No image'}</div>`;
+      const txt = `<div class="hcard__txt"><span class="nm">${it.name}${s === 2 && v === 2 ? rib : ''}</span>${withSub || size >= 4 ? `<span class="sb">${it.sub}</span>` : ''}</div>`;
+      const body = s === 1 ? `<div class="hcard__row">${txt}<span class="hcard__price" style="color:${c.primary}">${it.price}</span></div>`
+        : `${txt}${hbtn(sk, it.price, rad, v === 2 ? ' hbtn--sm' : '', s === 2)}`;
+      return `<div class="hcard hcard--s${s}${itemCls('cards')}" data-el="cards:item" style="${surf(sk, rad)};padding:${pad}px">${art}${body}</div>`;
+    };
+    const grid = (list) => `<div class="cards cards--${CARD_NAME[v].replace(/ /g, '-')}" style="grid-template-columns:repeat(${cols}, minmax(0, 1fr))">${list.map(card).join('')}</div>`;
+    const shown = AG.items.filter((it) => H.cats[it.cat]);
+    const perRow = v === 2 ? 3 : cols;
+    if (src.look.group) {
+      /* grouped by category: a heading and a row per category */
+      const cats = ['Gems', 'Heroes', 'Chests', 'Energy'].filter((k) => H.cats[k]);
+      return cats.map((k) => { const list = shown.filter((it) => it.cat === k); return list.length ? `<div class="cards-group"><span class="cards-group__h">${k}</span>${grid(all ? list : list.slice(0, perRow))}</div>` : ''; }).join('');
+    }
+    return grid(all ? shown : shown.slice(0, perRow * rows));
+  }
+
+  /* ---------- the hub's own header ---------- */
+  /* One header for every style (Daria, 27.09 — the two layouts broke on some looks): logo, menu, Store and Log in in a row.
+     Only the room decides: the desktop shows the menu, a tablet and a phone put it behind a burger, a phone also drops
+     Log in. The style still paints it (font, colours, buttons); the menu gives way before the buttons do. */
+  function headHTML() {
+    const sk = skinOf('header'), h = Math.round([48, 56, 64, 74, 84][sizeOf('header') - 1] * (desk() ? 1.2 : 1));
+    const nav = PAGES.filter((p) => p[0] !== 'login' && !H.hidden[p[0]]).map((p) => `<span class="nl${V.page === p[0] ? ' is-cur' : ''}">${p[1]}</span>`).join('');
+    const logo = `<b style="${fontOf('header')}">PIXEL RAIDERS</b>`;
+    const store = H.quickStore ? hbtn(sk, 'Store', radOf('header'), ' hbtn--sm') : '';
+    const login = phone() ? '' : `<span class="hbtn hbtn--sm hbtn--ghost" style="border-radius:${sk.art === 1 ? 999 : Math.max(4, radOf('header') - 4)}px">Log in</span>`;
+    const menu = desk() ? `<div class="hub-head__nav">${nav}</div>` : '';
+    const burger = desk() ? '' : '<span class="hub-burger" aria-hidden="true"><i></i><i></i><i></i></span>';
+    return `<div class="hub-head ${blockCls('header')}" data-el="header" style="min-height:${h}px">
+      ${logo}${menu}<span class="hub-head__gap"></span><span class="hub-head__act">${store}${login}${burger}</span>${selAi('header')}${keptMark('header')}</div>`;
+  }
+
+  /* ---------- sections of Home: the order comes from what the hub does first ---------- */
+  /* the banner's ground: the palette with the look's pattern and light */
+  function heroHTML(lead) {
+    const src = lookOf('hero'), sk = skinOf('hero'), c = sk.c, v = src.look.hero % 3, size = sizeOf('hero', lead), rad = radOf('hero');
+    const off = OFFERS[H.heroOffer % OFFERS.length];
+    const hw = H.hero !== 'base';
+    const ev = AG.newton.event;
+    // the banner Newton put here from the chat (handoff 6.10) wins over the regular hero offer
+    const hero = ev && ev.banner ? { bg: HERO_BG.hw[H.heroSeed % 3], title: ev.banner.title, sub: ev.banner.sub, price: ev.bundle.price, kicker: 'Halloween · ' + AG.newton.DATES }
+      : { bg: hw ? HERO_BG.hw[H.heroSeed % 3] : '', title: hw ? 'Pumpkin Chest' : off.title, sub: hw ? 'Halloween rewards · 3 days only' : off.sub, price: hw ? '$7.99' : off.price, kicker: hw ? 'Halloween' : off.kicker };
+    /* a desktop banner is taller: at 1280 wide the phone's heights would read as a strip */
+    const h = v === 2 ? (desk() ? [140, 160, 180, 200, 224] : [96, 108, 120, 134, 150])[size - 1] : (desk() ? [340, 380, 420, 460, 500] : [190, 220, 250, 290, 330])[size - 1];
+    const box = phone() ? `min-height:${Math.round(h * 0.9)}px` : `height:${h}px`;   // on a phone the text may wrap: the banner grows with it
+    /* a seasonal banner (the Halloween event) keeps the hub's style — art, ground, type, buttons — in the season's colours */
+    const hs = hero.bg ? AG.skin.seasonal(sk) : sk, hc = hs.c;
+    const ground = `${hs.bg === 5 ? '--hf:#FFFFFF;color:#FFFFFF;text-shadow:2px 2px 0 rgba(0,0,0,.4);' : hero.bg ? `--hf:${hc.fg};color:${hc.fg};` : ''}border-radius:${rad}px;background:${bgCss(hs, true)};${hs.surf === 4 ? `box-shadow:inset 0 0 0 1px ${hexA(hc.accent, .5)};` : hs.surf === 6 ? 'box-shadow:0 0 0 2px rgba(0,0,0,.45);' : ''}`;
+    const draft = H.hero === 'draft' ? `<div class="draftbar">${nwIcon()}<span>Newton · Halloween look</span><button class="ag-btn ag-btn--outline ag-btn--sm" data-chip="reroll-hero">Reroll</button><button class="ag-btn ag-btn--outline ag-btn--sm" data-chip="undo-hero">Undo</button></div>` : '';
+    const txt = `<small style="color:${hc.primary}">${hero.kicker}</small><b style="${fontOf('hero')}">${hero.title}</b><span class="hero__sub">${hero.sub}</span>`;
+    const buy = hbtn(hs, hero.price, rad);
+    const cluster = `<div class="hero__cluster">${hs.w.hero.map((n) => artSvg(n, hs)).join('')}</div>`;   // the world's own trio: a trophy, a dragon, a chest…
+    const cls = `hero hero--${['poster', 'split', 'band'][v]} ${blockCls('hero')}`;
+    if (v === 1) {
+      return `<div class="${cls}" data-el="hero" style="${box};${ground}">${draft}
+        <div class="hero__txt">${txt}${buy}</div><div class="hero__art" style="border-radius:${Math.max(0, rad - 4)}px;background:${withDeco({ deco: hs.deco || 1 }, '#FFFFFF', .12, `linear-gradient(140deg, ${hc.accent}, ${hc.primary})`, 1.4)}">${cluster}</div>${selAi('hero')}${keptMark('hero')}</div>`;
+    }
+    if (v === 2) {
+      return `<div class="${cls}" data-el="hero" style="${box};${ground}">${draft}
+        ${artSvg(hs.w.hero[0], hs, 'hero__icon')}<div class="hero__txt">${txt}</div>${buy}${selAi('hero')}${keptMark('hero')}</div>`;
+    }
+    return `<div class="${cls}" data-el="hero" style="${box};${ground}">${draft}${cluster}<div class="hero__txt">${txt}${buy}</div>${selAi('hero')}${keptMark('hero')}</div>`;
+  }
+  const blockHead = (title, part, big) => `<span class="${big ? 'hub-h' : 'hub-sub'}" style="${fontOf(part)}">${title}</span>`;
+  function picksHTML(lead) {
+    return `<div class="hub-block ${blockCls('cards')}" data-el="cards">${blockHead('Store picks', 'cards')}${cardsHTML(false, lead)}${selAi('cards')}${keptMark('cards')}</div>`;
+  }
+  /* news — the block: two columns or a list, how many; the card: with a picture or text only, how much text */
+  const NEWS_KIND = { Update: 'scroll-unfurled', Event: 'trophy', Community: 'star-medal' };
+  function newsBody(all, lead) {
+    const src = lookOf('news'), sk = skinOf('news'), c = sk.c, v = src.look.news % 2, pic = src.look.newsCard % 2 === 0, size = sizeOf('news', lead), rad = radOf('news');
+    const arts = ARTICLES.filter(isPub).slice(0, all ? 99 : src.sizes.newsN);
+    const k = desk() ? 1.4 : 1, pad = Math.round(16 * k);
+    /* the picture is drawn from the look: a gradient in the palette, the pattern, the kind of news as a shape */
+    const img = (a, i) => (pic ? `<div class="img" style="background:${withDeco(sk, '#FFFFFF', .14, `linear-gradient(${135 + i * 40}deg, ${hexA(i % 2 ? c.primary : c.accent, .9)}, ${hexA(i % 2 ? c.accent : c.primary, .55)})`, 1.2)};height:${Math.round((v ? [64, 76, 90, 104, 120] : [110, 130, 150, 170, 190])[size - 1] * k)}px;border-radius:${Math.max(3, rad - 4)}px${v ? '' : ';width:100%'}">${artSvg(NEWS_KIND[a.cat] || 'gem', sk)}</div>` : '');
+    const card = (a, i) => `<div class="ncard${itemCls('news')}" data-el="news:item" style="${surf(sk, rad)};padding:${pad}px;${!pic && !v ? `min-height:${[70, 84, 100, 116, 132][size - 1]}px` : ''}">
+      ${img(a, i)}<div class="ncard__txt">${size >= 2 ? `<span class="kick" style="color:${c.light ? c.primary : c.accent}">${a.cat.toUpperCase()}</span>` : ''}
+        <span class="ncard__t">${a.title}</span>${size >= 4 ? `<span class="ncard__d">${a.date}</span>` : ''}</div></div>`;
+    return `<div class="${v ? 'newslist' : 'news2'}">${arts.map(card).join('')}</div>`;
+  }
+  function newsHTML(lead) {
+    return `<div class="hub-block ${blockCls('news')}" data-el="news">${blockHead('News', 'news')}${newsBody(false, lead)}${selAi('news')}${keptMark('news')}</div>`;
+  }
+  /* daily rewards — the block: in a row / two rows / day 7 in the spotlight; the tile: its reward / big number / stamp, its size */
+  function daysHTML(lead) {
+    const src = lookOf('rewards'), sk = skinOf('rewards'), c = sk.c, v = src.look.rewards % 3, s = src.look.day % 3, rad = radOf('rewards');
+    const hDay = Math.round([96, 112, 128, 146, 166][sizeOf('rewards') - 1] * (phone() ? 0.8 : desk() ? 1.3 : 1) + (lead ? 16 : 0));
+    const tile = (r, i) => {
+      const n = i + 1, last = n === 7;
+      const mark = s === 1 ? `<span class="day__n" style="${fontOf('rewards')};color:${last ? c.primary : c.fg}">${n}</span>`
+        : s === 2 ? `<span class="day__stamp" style="color:${last ? c.primary : c.light ? c.fg : c.accent}">${n}</span>` : artSvg(rewardKind(r), sk);
+      const ring = last ? `;box-shadow:inset 0 0 0 2px ${c.primary}${sk.art === 1 ? `, 0 0 24px -6px ${hexA(c.primary, .8)}` : ''}` : '';
+      return `<div class="day${itemCls('rewards')}" data-el="rewards:item" style="${surf(sk, rad)}${ring}">
+        ${s === 1 ? '' : `<span class="day__l">Day ${n}</span>`}${mark}<span>${r}</span></div>`;
+    };
+    return `<div class="days${v === 1 ? ' days--grid' : v === 2 ? ' days--spot' : ''}" style="--hd-day:${hDay}px">${REWARDS_OF().map(tile).join('')}</div>`;
+  }
+  function rewardsHTML(lead, big) {
+    return `<div class="hub-block ${blockCls('rewards')}" data-el="rewards">${blockHead('Daily rewards', 'rewards', big)}${daysHTML(lead)}${selAi('rewards')}${keptMark('rewards')}</div>`;
+  }
+  /* the leaderboard on Home — a block you can add: the weekly board as a table or a podium */
+  const boardHTML = (sk, rad, title) => `<div class="board" style="${surf(sk, rad)}">${title ? `<span class="board__h">${title}</span>` : ''}${PLAYERS.map((p) => `<div><span style="width:22px;color:${sk.c.primary};font-weight:800">${p[0]}</span><span>${p[1]}</span><span>${p[2]}</span></div>`).join('')}</div>`;
+  function leadersHTML() {
+    const src = lookOf('leaders'), sk = skinOf('leaders'), c = sk.c, rad = radOf('leaders');
+    const body = src.look.leaders % 2
+      ? `<div class="podium">${[PLAYERS[1], PLAYERS[0], PLAYERS[2]].map((p) => `<div style="${surf(sk, rad)}"><b style="${fontOf('leaders')};color:${p[0] === '1' ? c.primary : c.fg}">${p[0]}</b><span>${p[1]}</span><small>${p[2]}</small></div>`).join('')}</div>`
+      : boardHTML(sk, rad);
+    return `<div class="hub-block ${blockCls('leaders')}" data-el="leaders">${blockHead('Top players this week', 'leaders')}${body}${selAi('leaders')}${keptMark('leaders')}</div>`;
+  }
+  /* text — a few plain lines Newton writes (Daria, 27.09: "what if I want some text there?"). What it says is about the
+     platform — how buying on the hub works — never a claim about the game (handoff 6.6). A block: plain or on a card. */
+  function textHTML() {
+    const sk = skinOf('text'), c = sk.c, rad = radOf('text'), card = lookOf('text').look.text % 2;
+    return `<div class="hub-block hub-text${card ? ' hub-text--card' : ''} ${blockCls('text')}" data-el="text"${card ? ` style="${surf(sk, rad)}"` : ''}>${blockHead('How it works', 'text')}
+      <p class="hub-text__p" style="color:${hexA(c.fg, .82)}">Buy here, play there: whatever you get on the hub lands in Pixel Raiders the moment you pay. Log in once with your Player ID, and purchases and daily gifts go straight to your account.</p>${selAi('text')}${keptMark('text')}</div>`;
+  }
+  const SECTION = { hero: heroHTML, cards: picksHTML, news: newsHTML, rewards: rewardsHTML, leaders: leadersHTML, text: textHTML };
+
+  /* the whole hub page as V says: the page, the device, canvas or preview */
+  function frameHTML() {
+    const c = col(), sk = skinOf('page');
+    const d = H.sizes.page - 1, W = DEVICES[V.dev].w;
+    const pad = phone() ? Math.max(14, PAD[d] - 4) : desk() ? PAD[d] * 2 + 8 : PAD[d] + 6;   // a desktop page breathes more at the edges
+    const gap = desk() ? Math.round(GAP[d] * 1.5) : GAP[d];
+    let body = '';
+    if (V.page === 'home') {
+      body = `<div class="hub-sec">${H.blocks.map((k, i) => SECTION[k](i === 0)).join('')}</div>`;
+    } else {
+      /* the page's own block, and around it what + added (the same blocks as on Home) */
+      const MAIN = {
+        store: () => {
+          const cats = ['Gems', 'Heroes', 'Chests', 'Energy'].filter((k) => H.cats[k]);
+          return `<div class="hub-block ${blockCls('cards')}" data-el="cards">${blockHead('Store', 'cards', true)}
+            ${lookOf('cards').look.group ? '' : `<div class="cats">${cats.map((k, i) => `<span style="background:${i ? hexA(c.fg, .08) : c.primary};color:${i ? c.fg : c.on}">${k}</span>`).join('')}</div>`}
+            ${cardsHTML(true, false, true)}${selAi('cards')}${keptMark('cards')}</div>`;
+        },
+        news: () => `<div class="hub-block ${blockCls('news')}" data-el="news">${blockHead('News', 'news', true)}${newsBody(true)}${selAi('news')}${keptMark('news')}</div>`,
+        rewards: () => rewardsHTML(false, true),
+        leaders: () => `<div class="hub-block"><span class="hub-h" style="${fontOf('cards')}">Leaderboards</span>${BOARDS.filter((b) => H.boards[b[0]]).map((b) => boardHTML(sk, radOf('leaders'), b[1])).join('')}</div>`,
+        login: () => `<div class="loginbox" style="${surf(sk, radOf('cards') + 4)}"><span class="hub-sub" style="${fontOf('cards')}">Log in with Player ID</span><span class="fld">Player ID</span>
+            <span class="loginbox__hint">${H.loginText || 'Add instructions for where players find their Player ID.'}</span>
+            <div class="loginbox__pic" style="background:${withDeco(sk, '#FFFFFF', .14, `linear-gradient(135deg, ${c.accent}, ${c.primary})`, 1.2)}"></div>${hbtn(sk, 'Log in', radOf('cards'))}</div>`
+      };
+      body = `<div class="hub-sec">${listOf(V.page).map((k) => (k === 'main' ? MAIN[V.page]() : SECTION[k](false))).join('')}</div>`;
+    }
+    const fill = DEVICES[V.dev].fill && !V.thumb;
+    /* the page's ground: the palette, and the look's pattern very quietly over it */
+    const ground = bgCss(sk, false);
+    return `<div class="hub-frame hub-frame--${V.dev}${fill ? ' is-fill' : ''}" style="width:${W}px;background:${ground};--hf:${c.fg};--hp:${c.primary};--ha:${c.accent};--hs:${c.surface};--hd-gap:${gap}px;--hd-pad:${pad}px;--hd-radius:${RAD[d]}px">${headHTML()}${body}</div>`;
+  }
+
+  /* Desktop: the 1280 page scaled to the window's width and at least its height — proportions hold.
+     Phone and Tablet: scaled to the window's width, up to 1.5× (Daria, 27.09: show the device as big as possible). */
+  const ZOOM_MAX = 1.5;
+  function fit() {
+    const c = $('#canvas'), f = $('#stage > .hub-frame');
+    if (!c || !f) return;
+    const cs = getComputedStyle(c), room = c.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), d = DEVICES[H.device];
+    if (d.fill) { const z = room / d.w; f.style.zoom = z.toFixed(4); f.style.minHeight = `${Math.ceil(c.clientHeight / z)}px`; return; }
+    f.style.minHeight = '';
+    f.style.zoom = Math.min(ZOOM_MAX, room / d.w).toFixed(3);   // as big as the window allows (Daria, 27.09), capped so a phone still reads as a phone
+  }
+  function renderCenter() {
+    // what Newton has to say about the hub and asking him — in the panel on the right
+    Object.assign(V, { page: H.page, dev: H.device, thumb: false });
+    const cv = $('#canvas'), framed = !DEVICES[H.device].fill;
+    cv.classList.toggle('canvas--framed', framed);
+    cv.style.background = framed ? 'var(--color-fg-secondary-alt)' : col().bg;   // around a phone or a tablet: Secondary Alt, a shade darker than the platform's grey (Daria, 27.09)
+    $('#stage').innerHTML = frameHTML();
+    fit();
+    /* something Newton made from the chat just landed here: it shimmers once (the event banner, images drawn) */
+    const f = AG.state.flash;
+    if (f && Date.now() - f.at < 6000) {
+      if (f.key === 'banner') AG.magic($('#stage .hero'), { key: 'flash:' + f.at, dark: true });
+      if (f.key === 'apply:images') $$('#stage .cards').forEach((el, i) => AG.magic(el, { key: `flash:${f.at}:${i}`, dark: true }));
+    }
+  }
+  /* where the change is, the magic plays (H.fx: selectors in the frame, set by the ask) */
+  function playFx() {
+    const s = H.fx; H.fx = null;
+    if (s) $$(s, $('#stage')).forEach((el) => AG.magic(el, { dark: true }));
+  }
+
+  function render() { if (EMBED) { renderCenter(); return; } renderHeader(); renderTools(); renderCenter(); renderCtx(); }
+
+  /* ---------- actions ---------- */
+  /* the only buttons left on the canvas: the Halloween draft bar Newton puts on the banner */
+  function chip(k) {
+    if (k === 'reroll-hero') { H.heroSeed++; changed(); }
+    if (k === 'undo-hero') { H.hero = 'base'; }
+    render();
+  }
+
+  /* ---------- the builder (handoff 5.4) ----------
+     Nothing to set up: the hub is built and ready to publish. Newton's quick actions are icons in the bar at the
+     bottom and next to what's selected (Daria, 26.09). Nothing selected — the dice, Undo / Redo, Styles, and on Home
+     + to add a block. A block selected — a field, its dice, its lock, − to take it off Home; its cards selected —
+     the same for all of them.
+     One click changes the hub, the magic plays where it changed. The chat stays for what you type. */
+  const BLOCK_NAME = () => ({ header: 'Header', hero: 'Banner', cards: H.page === 'store' ? 'Store items' : 'Store picks', rewards: 'Daily rewards', news: 'News', leaders: 'Leaderboard', text: 'Text' });
+  const BLOCK_SUB = { hero: 'The big offer at the top', cards: 'Items from your store', rewards: 'A gift for every day', news: 'From your App Store updates', leaders: 'Top 3 of the weekly board', text: 'A few lines on how the hub works' };
+  const ITEM_NAME = { cards: 'Item cards', rewards: 'Day tiles', news: 'News cards' };
+  const HAS_ITEMS = ['cards', 'rewards', 'news'];
+  /* where the magic plays: the block itself, or all its cards */
+  const fxOf = (id) => `[data-el="${id}"]`;
+  function select(id) {
+    H.sel = id || null;
+    render();
+    const i = $('[data-ctx-in]'); if (i) i.focus({ preventScroll: true });   // selected — you can say what to change right away
+  }
+
+  /* ---- the bar (Daria, 26.09): nothing selected — the dice, Undo / Redo, Styles. Something selected — its name in
+     the bar, and the field, the dice and the lock right next to it on the canvas (renderCtx). The lock is only
+     for an element — it keeps that element whole; the page has none. ---- */
+  function toolsHTML() {
+    const id = selId(), b = blockOf(id), names = BLOCK_NAME();
+    const btn = (t) => `<button class="tool" data-tool="${t.act}" aria-label="${t.tip}"${t.on != null ? ` aria-pressed="${!!t.on}"` : ''}${t.off ? ' aria-disabled="true"' : ''}
+      data-tip="${t.off || t.tip}">${icon(t.icon)}</button>`;
+    const history = [{ act: 'undo', icon: 'undo', tip: 'Undo', off: !H.past.length && 'Nothing to undo' }, { act: 'redo', icon: 'redo', tip: 'Redo', off: !H.future.length && 'Nothing to redo' }].map(btn).join('');
+    if (id) {
+      /* what's selected: the block — or "Block › its cards", the block name takes you back up to the block */
+      const label = isItems(id)
+        ? `<button class="tool-up" data-tool="up" data-tip="Select the whole block">${names[b]}</button><span class="tool-crumb">›</span>${ITEM_NAME[b]}`
+        : `${names[b]}`;
+      return `<span class="tool-sep"></span><span class="tool-part">${label}<button data-tool="deselect" aria-label="Back to the whole page" data-tip="Back to the whole page">${icon('x')}</button></span><span class="tool-sep"></span>${history}`;
+    }
+    const open = $('[data-menu="styles"]:not([hidden])'), openAdd = $('[data-menu="add"]:not([hidden])');
+    const add = `<div class="dd"><button class="tool" data-dd-hub="add" aria-haspopup="menu" aria-expanded="${!!openAdd}" aria-label="Add a block" data-tip="Add a block">${icon('plus')}</button>
+        <div class="ag-menu dd__menu add-menu" data-menu="add" role="menu"${openAdd ? '' : ' hidden'}>${openAdd ? addMenu() : ''}</div></div>`;
+    /* three groups (Daria, 26.09): page + device | Styles, dice, add | Undo / Redo */
+    return `<span class="tool-sep"></span>
+      <div class="dd"><button class="tool" data-dd-hub="styles" aria-haspopup="menu" aria-expanded="${!!open}" aria-label="Styles" data-tip="Styles">${icon('palette')}</button>
+        <div class="ag-menu dd__menu sty-menu" data-menu="styles" role="menu"${open ? '' : ' hidden'}>${stylesMenu()}</div></div>
+      ${btn({ act: 'roll', icon: 'dice', tip: 'Roll the dice' })}${add}
+      <span class="tool-sep"></span>${history}`;
+  }
+
+  /* ---- next to what's selected: a small field, the dice, the lock (Daria, 26.09) ----
+     The field takes plain words about this block or its cards ("bigger", "a list", "group by category");
+     the dice gives it another layout (a block) or another style (cards); the lock keeps the block. */
+  const HINT = {
+    header: 'Taller, shorter…', hero: 'Taller, another image…', leaders: 'A podium, a table…', cards: 'A list, group by category, more rows…',
+    rewards: 'Two rows, day 7 bigger…', news: 'A list, more news…', text: 'On a card, plain…',
+    'cards:item': 'Bigger, price as text, ribbon…', 'rewards:item': 'Bigger, big numbers…', 'news:item': 'Text only, more text…'
+  };
+  let ctxMiss = false, ctxHintT = 0;
+  /* the shining border round what's selected — the block, or all its cards (Daria, 28.09) */
+  function renderSel() {
+    const c = $('#canvas'); if (!c) return;
+    $$('.sel-ring, .sel-ring__ai', c).forEach((n) => n.remove());
+    const id = selId(); if (!id) return;
+    const cr = c.getBoundingClientRect(), items = isItems(id);
+    $$('#stage .is-sel').forEach((el) => {
+      const r = el.getBoundingClientRect(); if (!r.width) return;
+      const inside = el.classList.contains('hub-head'), g = inside ? -4 : items ? 7 : 10;   // the header touches the window: the border goes inside it
+      const z = el.offsetWidth ? r.width / el.offsetWidth : 1, rad = (parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0) * z + Math.max(g, 4);
+      let left = r.left - cr.left + c.scrollLeft - g, top = r.top - cr.top + c.scrollTop - g, w = r.width + g * 2;
+      left = Math.max(2, left); w = Math.min(w, c.scrollWidth - left - 2);   // never past the canvas: no sideways scroll
+      const ring = document.createElement('div');
+      ring.className = 'sel-ring';
+      Object.assign(ring.style, { left: `${left}px`, top: `${top}px`, width: `${w}px`, height: `${r.height + g * 2}px`, borderRadius: `${rad}px` });
+      c.appendChild(ring);
+      if ($(':scope > .sel-ai', el)) c.insertAdjacentHTML('beforeend', `<span class="sel-ring__ai" title="Made by Newton" style="left:${left + w - 14}px;top:${top - 10}px">${nwIcon()}</span>`);
+    });
+  }
+  function renderCtx() {
+    renderSel();
+    const box = $('#ctx'), id = selId();
+    const el = id && $(`#stage [data-el="${id}"]`);
+    if (!el) { box.hidden = true; return; }
+    const b = blockOf(id), kept = !!H.locks[b];
+    /* the lock keeps the element whole (Daria, 26.09): nothing changes it — not the page's dice, not its own, not
+       words, and it can't be taken off the page — until it's unlocked */
+    const canRemove = listOf().includes(b) && !isItems(id);
+    const ph = kept ? 'Kept — unlock it to change' : ctxMiss ? 'Not in the prototype yet — try “bigger” or “a list”' : HINT[id] || 'What to change?';
+    box.classList.toggle('is-miss', ctxMiss);
+    /* ready asks for this block, the words the field understands (Daria, 28.09: people type anything — these always work);
+       the example in the empty field changes between them */
+    const asks = kept ? [] : (HINT[id] || '').replace('…', '').split(',').map((x) => x.trim()).filter(Boolean).slice(0, 3);
+    box.innerHTML = `<form data-ctx-form>${nwIcon('Newton')}<input data-ctx-in aria-label="What to change" placeholder="${ph}" autocomplete="off"${kept ? ' disabled' : ''}></form>
+      ${id === 'header' ? '' : `<button class="tool tip-up" data-ctx="dice" aria-label="${isItems(id) ? 'Another style' : 'Another layout'}" data-hint="${kept ? 'Kept — unlock it to change' : 'Roll the dice'}"${kept ? ' aria-disabled="true"' : ''}>${icon('dice')}</button>`}
+      <button class="tool" data-ctx="lock" aria-pressed="${kept}" aria-label="${kept ? 'Kept — let it change again' : 'Keep this block'}" title="${kept ? 'Kept — let it change again' : 'Keep this block — nothing will change it'}">${icon(kept ? 'lock' : 'unlock')}</button>
+      ${canRemove ? `<button class="tool" data-ctx="remove" aria-label="Remove from the page" title="${kept ? 'Kept — unlock it to remove' : 'Remove from the page'}"${kept ? ' aria-disabled="true"' : ''}>${icon('minus')}</button>` : ''}`;
+    if (asks.length) box.insertAdjacentHTML('beforeend', `<div class="ctx__asks">${asks.map((q) => `<button class="ctx__ask" data-ctx-ask="${q.toLowerCase()}">${q.charAt(0).toUpperCase() + q.slice(1)}</button>`).join('')}</div>`);
+    clearInterval(ctxHintT);
+    if (asks.length && !kept && !ctxMiss) {
+      let n = 0; const inp = $('[data-ctx-in]', box), say = () => { if (inp && !inp.value) inp.placeholder = `Try “${asks[n % asks.length].toLowerCase()}”…`; n++; };
+      say(); ctxHintT = setInterval(() => { if (!inp.isConnected) return clearInterval(ctxHintT); say(); }, 2600);
+    }
+    box.hidden = false;
+    ctxMiss = false;
+    /* above the selection, like Figma's; under it if there's no room above in view; inside its top if neither fits */
+    const c = $('#canvas'), cr = c.getBoundingClientRect(), r = el.getBoundingClientRect(), bh = box.offsetHeight, bw = box.offsetWidth;
+    let top = r.top - bh - 8;
+    if (top < cr.top + 8) top = r.bottom + 8;
+    if (top + bh > cr.bottom - 80) top = Math.max(cr.top + 8, Math.min(r.top + 10, cr.bottom - bh - 80));
+    const left = Math.max(cr.left + 8, Math.min(r.left, cr.right - bw - 8));
+    box.style.top = `${top - cr.top + c.scrollTop}px`;
+    box.style.left = `${left - cr.left + c.scrollLeft}px`;
+  }
+  /* plain words → one of the asks, read for what's selected */
+  function resolve(text) {
+    const t = text.toLowerCase().trim(), id = selId(), b = blockOf(id), items = isItems(id);
+    if (!t) return null;
+    const known = ALL_ASKS.find((k) => t.includes(k));
+    if (known) return t;
+    const up = /bigger|larger|big |huge|more space|increase/.test(t + ' '), down = /smaller|tiny|compact|decrease/.test(t);
+    if (b === 'cards') {
+      if (/group|categor/.test(t)) return 'group by category';
+      if (/together|ungroup|one grid/.test(t)) return 'ungroup';
+      if (/more (row|item|card|product)|another row/.test(t)) return 'more items';
+      if (/fewer|less (row|item|card)|one row/.test(t)) return 'fewer items';
+      if (/list/.test(t)) return 'layout list';
+      if (/row|grid/.test(t)) return 'layout row';
+      if (/price as text|price tag|text price/.test(t)) return 'style tag';
+      if (/ribbon|badge|outline/.test(t)) return 'style ribbon';
+      if (/button/.test(t)) return 'style button';
+      if (/picture|image|art/.test(t)) return 'another image';
+      if (up) return items ? 'bigger cards' : 'layout big';
+      if (down) return 'smaller cards';
+    }
+    if (b === 'rewards') {
+      if (/two rows|2 rows/.test(t)) return 'layout two rows';
+      if (/day 7|spotlight|last day/.test(t)) return 'layout spotlight';
+      if (/one row|in a row|row/.test(t)) return 'layout one row';
+      if (/number/.test(t)) return 'style number';
+      if (/stamp|circle/.test(t)) return 'style stamp';
+      if (/gem|diamond|icon/.test(t)) return 'style gem';
+      if (up) return 'bigger tiles';
+      if (down) return 'smaller tiles';
+    }
+    if (b === 'news') {
+      if (/text only|no picture|without/.test(t)) return 'style text only';
+      if (/picture|image/.test(t)) return 'style with picture';
+      if (/list/.test(t)) return 'layout list';
+      if (/column|grid/.test(t)) return 'layout columns';
+      if (/more news|more articles|another one/.test(t)) return 'more news';
+      if (/fewer|less news/.test(t)) return 'fewer news';
+      if (/more text|longer/.test(t) || up) return 'more text';
+      if (/less text|headline|shorter/.test(t) || down) return 'less text';
+    }
+    if (b === 'hero' || b === 'header') {
+      if (/taller|higher/.test(t) || up) return 'taller';
+      if (/shorter|lower|slim/.test(t) || down) return 'shorter';
+      if (/picture|image|art/.test(t)) return 'another image';
+      if (/layout|stack|split|poster/.test(t)) return 'change layout';
+    }
+    if (/layout|arrange|shuffle|different/.test(t)) return items ? (b === 'rewards' ? 'another tile style' : 'another card style') : 'change layout';
+    if (/style|design|look/.test(t)) return items ? (b === 'rewards' ? 'another tile style' : 'another card style') : 'change layout';
+    if (b === 'leaders') {
+      if (/podium|top 3|cards/.test(t)) return 'layout podium';
+      if (/table|list|rows/.test(t)) return 'layout table';
+    }
+    if (/keep|lock/.test(t)) return 'keep this one';
+    return null;
+  }
+  /* everything Newton understands here — typed in the input or clicked in the bar */
+  const ALL_ASKS = ['another look', 'reroll', 'more room', 'roomier', 'tighter', 'denser', 'bigger cards', 'smaller cards', 'bigger tiles', 'smaller tiles',
+    'more text', 'less text', 'taller', 'shorter', 'keep this one', 'let it change again', 'change layout', 'another layout', 'change just this',
+    'another card style', 'another tile style', 'group by category', 'ungroup', 'more items', 'fewer items', 'more news', 'fewer news',
+    'another image', 'rewards first', 'news first', 'store first', 'selling first', 'show all categories', 'hide gems',
+    'hide heroes', 'hide chests', 'hide energy', 'player id hint', 'weekly board', 'both boards', 'undo', 'redo'];
+
+  /* ---- what an ask does ---- */
+  const nextIdx = (n, cur) => (n < 2 ? 0 : (cur + 1 + Math.floor(Math.random() * (n - 1))) % n);
+  const copy = (o) => JSON.parse(JSON.stringify(o));
+  const snapshot = () => copy({ look: H.look, sizes: H.sizes, locks: H.locks, frozen: H.frozen, cats: H.cats, boards: H.boards, loginText: H.loginText, heroSeed: H.heroSeed, artSeed: H.artSeed, blocks: H.blocks, pageBlocks: H.pageBlocks, images: !!AG.state.applied.images, tags: AG.style().tags.slice() });
+  function restore(past) {
+    const { images, tags, ...rest } = past;
+    Object.assign(H, rest);
+    const patch = {};
+    if (!!AG.state.applied.images !== images) patch.applied = Object.assign({}, AG.state.applied, { images });
+    if (tags && tags.join() !== AG.style().tags.join()) patch.style = Object.assign({}, AG.style(), { tags });
+    if (Object.keys(patch).length) AG.save(patch);
+  }
+  const freeze = () => ({ look: copy(H.look), sizes: copy(H.sizes) });
+  /* a part's own look value: a kept part keeps it in its snapshot */
+  function setLook(part, field, val) {
+    H.look[field] = val;
+    if (H.frozen[part]) H.frozen[part].look[field] = val;
+  }
+  const lookNow = (part, field) => lookOf(part).look[field];
+  /* the dice for the whole page: every part that isn't kept gets a new shape and size */
+  function roll() {
+    const L = H.look;
+    const pick = (list, cur) => { const other = list.filter((i) => i !== cur); return other.length ? other[Math.floor(Math.random() * other.length)] : cur; };
+    /* the dice stays inside the styles (Daria, 27.09): the tags keep the art, the ground, the font, the cards and the buttons;
+       it changes the colours (another palette the tags suit), the blocks' layouts and what's in them (icons, the offer) */
+    const light = (i) => !!PALETTES[i].light === !!PALETTES[L.pal].light;   // "a little": a dark hub stays dark, a light one light
+    const pals = tagPals().filter(light), same = PALETTES.map((_, i) => i).filter(light);
+    L.pal = pick(pals.length > 1 ? pals : same, L.pal);
+    L.mono = Math.random() < .25 ? 1 : 0; L.set = Math.floor(Math.random() * 2);
+    H.heroOffer++;
+    L.head = nextIdx(2, L.head); L.hero = nextIdx(3, L.hero); L.cards = nextIdx(3, L.cards); L.news = nextIdx(2, L.news);
+    L.rewards = nextIdx(3, L.rewards); L.leaders = nextIdx(2, L.leaders); L.card = nextIdx(3, L.card); L.day = nextIdx(3, L.day); L.newsCard = nextIdx(2, L.newsCard);
+    H.sizes.page = 2 + Math.floor(Math.random() * 3);
+    ['header', 'hero', 'cards', 'news', 'rewards'].forEach((p) => { if (!H.locks[p]) H.sizes[p] = 2 + Math.floor(Math.random() * 3); });
+  }
+  /* a block's layout only */
+  const LAYOUT = { header: ['head', 2], hero: ['hero', 3], cards: ['cards', 3], rewards: ['rewards', 3], news: ['news', 2], leaders: ['leaders', 2], text: ['text', 2] };
+  function rollLayout(b) {
+    const [field, n] = LAYOUT[b];
+    setLook(b, field, nextIdx(n, lookNow(b, field)));
+    if (b === 'hero') H.heroSeed++;
+  }
+  /* its cards' style only */
+  const STYLE = { cards: ['card', 3], rewards: ['day', 3], news: ['newsCard', 2] };
+  function rollStyle(b) { const [field, n] = STYLE[b]; setLook(b, field, nextIdx(n, lookNow(b, field))); }
+  const partSize = (part, k) => { const f = H.frozen[part]; return f && f.sizes[k] != null ? f.sizes[k] : H.sizes[k]; };
+  const lim = (k) => RANGE[k] || [1, 5];
+  function step(k, d, part = k) {
+    const [lo, hi] = lim(k);
+    const cur = partSize(part, k);
+    const v = Math.max(lo, Math.min(hi, cur + d));
+    if (v === cur) return false;
+    H.sizes[k] = v;
+    if (k !== 'page' && H.frozen[part]) H.frozen[part].sizes[k] = v;
+    if (k === 'page') Object.keys(H.frozen).forEach((x) => { if (H.frozen[x]) H.frozen[x].sizes.page = v; });
+    return true;
+  }
+  /* one ask → one change and one line back; anything else falls through to the prototype's fallback.
+     H.fx says where the change is on the canvas — the magic plays there */
+  function answer(ask) {
+    const id = selId(), b = blockOf(id) || null, names = BLOCK_NAME();
+    const sized = (key, d, line, max, fx, part) => (step(key, d, part) ? ((H.fx = fx), line) : max);
+    const all = '.hub-frame';
+    /* a kept element doesn't change until it's unlocked */
+    if (b && H.locks[b] && !ask.includes('let it change again') && !ask.includes('keep this one') && !ask.includes('another look') && !ask.includes('reroll'))
+      return `**${names[b]} is kept.** Unlock it to change it.`;
+    if (ask.includes('another look') || ask.includes('reroll')) { roll(); H.fx = all; return '**A new look.** Palette, type and layout changed together.'; }
+    if (ask.includes('more room') || ask.includes('roomier')) return sized('page', 1, '**More room.** Easier to read, a bit less in the first screen.', 'That’s as roomy as it gets.', all);
+    if (ask.includes('tighter') || ask.includes('denser')) return sized('page', -1, '**Tighter.** More fits in the first screen.', 'That’s as tight as it gets.', all);
+    if (ask.includes('bigger cards')) return sized('cards', 1, '**Bigger cards.** More art, fewer in a row.', 'They’re as big as they go.', fxOf('cards:item'));
+    if (ask.includes('smaller cards')) return sized('cards', -1, '**Smaller cards.** More of them in a row.', 'They’re as small as they go.', fxOf('cards:item'));
+    if (ask.includes('bigger tiles')) return sized('rewards', 1, '**Bigger tiles.**', 'They’re as big as they go.', fxOf('rewards:item'));
+    if (ask.includes('smaller tiles')) return sized('rewards', -1, '**Smaller tiles.**', 'They’re as small as they go.', fxOf('rewards:item'));
+    if (ask.includes('more text')) return sized('news', 1, '**More of the story** in each news card.', 'That’s all the text there is.', fxOf('news:item'));
+    if (ask.includes('less text')) return sized('news', -1, '**Headlines only** in the news.', 'Headlines only already.', fxOf('news:item'));
+    if (ask.includes('more items')) return sized('rows', 1, '**Another row** of store picks.', 'Three rows is the most.', fxOf('cards'), 'cards');
+    if (ask.includes('fewer items')) return sized('rows', -1, '**One row fewer** of store picks.', 'One row already.', fxOf('cards'), 'cards');
+    if (ask.includes('more news')) return sized('newsN', 1, '**One more news** on Home.', 'Four is the most.', fxOf('news'), 'news');
+    if (ask.includes('fewer news')) return sized('newsN', -1, '**One news fewer** on Home.', 'Two is the fewest.', fxOf('news'), 'news');
+    if (ask.includes('taller')) { const k = b === 'header' ? 'header' : 'hero'; return sized(k, 1, `**${names[k]} is taller.**`, 'That’s as tall as it goes.', fxOf(k)); }
+    if (ask.includes('shorter')) { const k = b === 'header' ? 'header' : 'hero'; return sized(k, -1, `**${names[k]} is shorter.**`, 'That’s as short as it goes.', fxOf(k)); }
+    if (ask.includes('keep this one')) { if (!b) return null; H.locks[b] = true; H.frozen[b] = freeze(); return `**${names[b]} is kept.** The dice will go around it.`; }
+    if (ask.includes('let it change again')) { if (!b) return null; H.locks[b] = false; H.frozen[b] = null; return `**${names[b]} is back in the roll.**`; }
+    if (ask.includes('change layout') || ask.includes('another layout') || ask.includes('change just this')) {
+      const k = b || 'cards'; rollLayout(k); H.fx = fxOf(k); return `**Another layout** for ${names[k].toLowerCase()}. The rest stays.`;
+    }
+    if (ask.includes('another card style') || ask.includes('another tile style')) {
+      const k = HAS_ITEMS.includes(b) ? b : (ask.includes('tile') ? 'rewards' : 'cards'); rollStyle(k); H.fx = fxOf(k + ':item'); return `**Another style** for all the ${ITEM_NAME[k].toLowerCase()}.`;
+    }
+    /* a layout or a style by its name (from the field next to the element) */
+    const NAMED = {
+      'layout row': ['cards', 'cards', 0], 'layout big': ['cards', 'cards', 1], 'layout list': [b === 'news' ? 'news' : 'cards', b === 'news' ? 'news' : 'cards', b === 'news' ? 1 : 2],
+      'layout columns': ['news', 'news', 0], 'layout one row': ['rewards', 'rewards', 0], 'layout two rows': ['rewards', 'rewards', 1], 'layout spotlight': ['rewards', 'rewards', 2],
+      'style button': ['cards', 'card', 0], 'style tag': ['cards', 'card', 1], 'style ribbon': ['cards', 'card', 2],
+      'style gem': ['rewards', 'day', 0], 'style number': ['rewards', 'day', 1], 'style stamp': ['rewards', 'day', 2],
+      'style with picture': ['news', 'newsCard', 0], 'style text only': ['news', 'newsCard', 1],
+      'layout table': ['leaders', 'leaders', 0], 'layout podium': ['leaders', 'leaders', 1]
+    };
+    const named = Object.keys(NAMED).find((k) => ask === k);
+    if (named) {
+      const [part, field, v] = NAMED[named];
+      setLook(part, field, v); H.fx = fxOf(named.startsWith('style') ? part + ':item' : part);
+      return `**Done** — ${named.replace(/^(layout|style) /, '')}.`;
+    }
+    if (ask.includes('ungroup')) { setLook('cards', 'group', 0); H.fx = fxOf('cards'); return '**Store picks together** again, not by category.'; }
+    if (ask.includes('group by category')) { setLook('cards', 'group', 1); H.fx = fxOf('cards'); return '**Grouped by category** — Gems, Heroes, Chests, Energy.'; }
+    if (ask.includes('another image')) {
+      if (b === 'cards') { AG.items.forEach((it) => { H.artSeed[it.id] = (H.artSeed[it.id] || 0) + 1; }); H.fx = fxOf('cards:item'); return '**Other pictures** on the item cards.'; }
+      H.heroSeed++; H.fx = fxOf('hero'); return '**Another image** on the banner.';
+    }
+    /* typed only: put a block first */
+    const first = (k) => { H.blocks = [k, ...H.blocks.filter((x) => x !== k)]; H.fx = all; };
+    if (ask.includes('rewards first')) { first('rewards'); return '**Rewards first.** The daily cycle leads the page.'; }
+    if (ask.includes('news first')) { first('news'); return '**News first.** Updates lead the page.'; }
+    if (ask.includes('store first') || ask.includes('selling first')) { first('cards'); return '**Store first.** The items lead the page.'; }
+    if (ask.startsWith('hide ')) {
+      const key = Object.keys(H.cats).find((x) => x.toLowerCase() === ask.slice(5).trim());
+      if (!key) return null;
+      H.cats[key] = false; H.fx = '.cats, .cards';
+      return `**${key} is off the store page.** Its items stay in Dashboard → Store.`;
+    }
+    if (ask.includes('show all categories')) { Object.keys(H.cats).forEach((c) => { H.cats[c] = true; }); H.fx = '.cats, .cards'; return '**All four categories** are on the store page again.'; }
+    if (ask.includes('player id hint')) { H.loginText = LOGIN_SUGGEST; H.fx = '.loginbox'; return '**Added to your Login page** — written from your store page.'; }
+    if (ask.includes('weekly board')) { H.boards.b7 = true; H.boards.ball = false; H.fx = all; return '**Weekly board only.** The all-time one is off the hub.'; }
+    if (ask.includes('both boards')) { H.boards.b7 = true; H.boards.ball = true; H.fx = all; return '**Both boards** are on the hub again.'; }
+    return null;
+  }
+  /* − and + (Daria, 26.09): a block off Home, a block back on — after the selected one, or at the end */
+  function removeBlock(b) {
+    if (H.locks[b]) return;
+    onLook({ ask: 'remove', run: () => { setList(listOf().filter((x) => x !== b)); H.sel = null; return `**${BLOCK_NAME()[b]} is off the page.** Put it back with +.`; } });
+    AG.toast(`${BLOCK_NAME()[b]} removed — + puts it back`);
+  }
+  /* ---- drag a block on Home to another place (Daria, 27.09) ----
+     Press on a block and move: it fades, a line shows the gap it will drop into; let go — the order changes (Undo takes
+     it back, Newton's "what I did" says "Block order"). A kept block stays where it is. A plain click still selects. */
+  let drag = null, dragClick = false;
+  function dropAt(y) {
+    const els = H.blocks.map((k) => $(`#stage .hub-sec > [data-el="${k}"]`)).filter(Boolean);
+    let at = els.length;
+    for (let i = 0; i < els.length; i++) { const r = els[i].getBoundingClientRect(); if (y < r.top + r.height / 2) { at = i; break; } }
+    return { at, els };
+  }
+  document.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || H.page !== 'home') return;
+    const el = e.target.closest('#stage .hub-sec > [data-el]'), k = el && el.dataset.el;
+    if (!k || !H.blocks.includes(k) || H.locks[k] || e.target.closest('.ctx, .sel-ai, button, input')) return;
+    drag = { k, el, x: e.clientX, y: e.clientY, on: false };
+  });
+  document.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    if (!drag.on) { if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return; drag.on = true; drag.el.classList.add('is-dragging'); $('#canvas').classList.add('is-dragging'); $('#ctx').hidden = true; }
+    const cv = $('#canvas'), cr = cv.getBoundingClientRect();
+    if (e.clientY < cr.top + 60) cv.scrollTop -= 14; else if (e.clientY > cr.bottom - 100) cv.scrollTop += 14;   // near the edge the canvas scrolls
+    const { at, els } = dropAt(e.clientY);
+    drag.at = at;
+    const ref = els[Math.min(at, els.length - 1)].getBoundingClientRect(), sec = $('#stage .hub-sec').getBoundingClientRect();
+    const gap = at === 0 ? ref.top - 10 : at >= els.length ? ref.bottom + 8 : (els[at - 1].getBoundingClientRect().bottom + ref.top) / 2 - 2;
+    let line = $('#dropline'); if (!line) { line = document.createElement('div'); line.id = 'dropline'; line.className = 'dropline'; cv.appendChild(line); }
+    Object.assign(line.style, { top: `${gap - cr.top + cv.scrollTop}px`, left: `${sec.left - cr.left + 16}px`, width: `${sec.width - 32}px` });
+  });
+  document.addEventListener('pointerup', () => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    if (!d.on) return;
+    dragClick = true; setTimeout(() => { dragClick = false; }, 0);   // the click that ends a drag doesn't select
+    const line = $('#dropline'); if (line) line.remove();
+    $('#canvas').classList.remove('is-dragging'); d.el.classList.remove('is-dragging');
+    const from = H.blocks.indexOf(d.k), to = d.at > from ? d.at - 1 : d.at;
+    if (d.at == null || to === from) { renderCtx(); return; }
+    onLook({ ask: 'move', run: () => {
+      const list = H.blocks.filter((k) => k !== d.k); list.splice(to, 0, d.k); H.blocks = list;
+      H.sel = d.k; H.fx = fxOf(d.k);
+      return `**${BLOCK_NAME()[d.k]}** moved.`;
+    } });
+  });
+
+  function addBlock(k) {
+    onLook({ ask: 'add', run: () => {
+      const list = listOf(), i = posOf(blockOf(H.sel)), at = i > -1 ? i + 1 : list.length;
+      setList([...list.slice(0, at), k, ...list.slice(at)]);
+      H.sel = k; H.fx = fxOf(k);
+      return `**${BLOCK_NAME()[k]}** is on the page.`;
+    } });
+    const el = $(`#stage [data-el="${k}"]`); if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    setTimeout(renderCtx, 400);
+  }
+  /* Decide for me in +: what sells best on this page goes on it — a banner on top, the rest after the page's own block */
+  function putBlocks(ks) {
+    const list = listOf().slice(), m = list.lastIndexOf('main');
+    let at = m > -1 ? m + 1 : list.length;
+    ks.forEach((k) => { if (list.includes(k)) return; if (k === 'hero') { list.unshift(k); at++; } else list.splice(at++, 0, k); });
+    setList(list);
+  }
+  function decideBlocks() {
+    const ks = REC[H.page].filter((k) => !listOf().includes(k)); if (!ks.length) return;
+    const names = BLOCK_NAME();
+    onLook({ ask: 'add', run: () => { putBlocks(ks); H.sel = null; H.fx = ks.map(fxOf).join(', '); return `**Added ${ks.map((k) => names[k].toLowerCase()).join(', ')}** — what sells best on this page.`; } });
+    AG.toast(`Added ${ks.map((k) => names[k].toLowerCase()).join(' and ')}`);
+  }
+
+  /* a style tag on or off: the colours and the type move to the best match (Styles can be undone) */
+  function toggleStyle(t) {
+    onLook({ ask: 'style', run: () => {
+      const st = AG.style(), tags = st.tags.includes(t) ? st.tags.filter((x) => x !== t) : st.tags.concat(t);
+      AG.save({ style: Object.assign({}, st, { tags, newton: st.newton.filter((x) => x !== t || tags.includes(t)) }) });
+      fitToStyles(H.look);
+      H.fx = '.hub-frame';
+      return `**${t}** ${tags.includes(t) ? 'is in' : 'is out'}. ${ARTS[H.look.art]} art, ${FONTS[H.look.font].name}, ${PALETTES[H.look.pal].name}.`;
+    } });
+  }
+  /* ---- the page's own settings, as Newton's widget in the chat (Daria, 26.09) — one clean block, no text above it ---- */
+  const CATS = ['Gems', 'Heroes', 'Chests', 'Energy'];
+  function settingsMsg() {
+    if (H.page === 'store') return { sid: 'hub:set:store', widget: { type: 'toggles', flow: 'hub-setting', key: 'cats', title: 'Categories on the store page', items: CATS.map((c) => ({ label: c, on: !!H.cats[c] })) } };
+    /* a suggestion, not a form (Daria, 26.09): Newton asks, a plain "yes" adds it — he writes it himself from the store page */
+    if (H.page === 'login') return H.loginText ? null : { sid: 'hub:set:login',
+      widget: Object.assign({ type: 'signal', lv: 2, kind: 'Fix', title: 'Players can’t find their Player ID', sub: 'A hint on the login page fixes most of it.',
+        cta: 'Add the hint', flow: 'hub-setting', key: 'login', alt: 'Not now', altNote: 'OK. Ask me any time.' },
+        AG.homeState() >= 2 ? { sig: { v: '59%', u: 'stop at login', bar: 59 } } : {}) };   // the number only once there are players   // "yes" writes it here, the block keeps a quiet note — nothing carried to other pages
+    if (H.page === 'leaders') return { sid: 'hub:set:leaders', widget: { type: 'options', flow: 'hub-setting', key: 'boards', editable: true, rec: false, title: 'Which leaderboards to show?', cta: 'Show',
+        options: [{ title: 'Both boards', sub: 'Last 7 days and all time' }, { title: 'Only the weekly one', sub: 'Most played in the last 7 days' }], picked: H.boards.ball ? 0 : 1 } };
+    return null;
+  }
+  /* Tips (Daria, 27.09): a ready question in the chat asks Newton what works on this page — where the accents go, what makes
+     players buy. He answers in a few short lines and offers to do it: one "Apply tips", one step in Undo. Each tip is
+     something the builder really does here (the order of blocks, a block that sells, a layout that stands out). */
+  const ADVICE = {
+    home: { card: 'Home can sell more', q: 'What makes players buy on Home?', lines: ['**Lead with one offer.** A banner with a price sells better than a menu.', '**Show the store right under it,** before anything else.', '**Give them a reason to come back:** daily gifts close to the top.'],
+      run: () => { const lead = ['hero', 'cards', 'rewards']; H.blocks = lead.concat(H.blocks.filter((k) => !lead.includes(k))); return 'banner, store picks and daily gifts lead the page'; } },
+    store: { card: 'The store can sell more', q: 'How do I sell more in the store?', lines: ['**Put your best offer on top** — a banner with one price.', '**Bigger cards:** the art is what sells.', '**Group by category** so players find things fast.'],
+      run: () => { putBlocks(['hero']); if (!H.locks.cards) { H.sizes.cards = Math.min(5, H.sizes.cards + 1); setLook('cards', 'group', 1); } return 'a banner on top, bigger cards, grouped by category'; } },
+    rewards: { card: 'Gifts can bring players back', q: 'How do I bring players back?', lines: ['**Make day 7 the one to wait for** — put it in the spotlight.', '**Store picks under the gifts:** players who come back are the ones who buy.'],
+      run: () => { if (!H.locks.rewards) setLook('rewards', 'rewards', 2); putBlocks(['cards']); return 'day 7 in the spotlight, store picks under the gifts'; } },
+    news: { card: 'News can lead to the store', q: 'What should the news page do?', lines: ['**News brings players in; the store makes the money.** Put store picks under the news.', '**An offer on top** catches them while they read.'],
+      run: () => { putBlocks(['hero', 'cards']); return 'an offer on top, store picks under the news'; } },
+    leaders: { card: 'Leaderboards can bring players back', q: 'How do leaderboards help sales?', lines: ['**One weekly board is easier to chase** than an all-time one.', '**Show the daily gifts next to it:** players who compete come back every day.'],
+      run: () => { H.boards.b7 = true; H.boards.ball = false; putBlocks(['rewards']); return 'the weekly board only, daily gifts next to it'; } },
+    login: { card: 'Login can lose fewer players', q: 'Why do players get stuck at login?', lines: ['**They can’t find their Player ID** — a hint on where it is fixes most of it.', '**A line on how purchases arrive** makes paying feel safe.'],
+      run: () => { H.loginText = LOGIN_SUGGEST; putBlocks(['text']); return 'a Player ID hint and a line on how purchases arrive'; } }
+  };
+  const adviceMsg = () => {
+    const a = ADVICE[H.page] || ADVICE.home;
+    /* already set up that way: say so in the answer, don't offer a button that would change nothing (a dry run) */
+    const keep = JSON.stringify(snapshot()); a.run(); const same = JSON.stringify(snapshot()) === keep; restore(JSON.parse(keep));
+    if (same) return { q: a.q, reply: { text: `${a.lines.map((l) => `- ${l}`).join('\n')}\n\nThis page already works that way — nothing to change.`, tools: false } };
+    return { q: a.q, reply: { text: a.lines.map((l) => `- ${l}`).join('\n'), tools: false,
+      widget: { type: 'signal', lv: 3, kind: H.page === 'rewards' || H.page === 'leaders' ? 'Players' : 'Sales', flow: 'hub-setting', key: 'advice', page: H.page, title: a.card, sub: 'I can set it up here now.', cta: 'Apply tips', alt: 'Not now', altNote: 'OK. Ask me any time.' } } };
+  };
+  function onSetting(act, { data, msg, chat, i }) {
+    if (data.key === 'advice' && act === 'offer') {
+      const a = ADVICE[data.page] || ADVICE.home;
+      if (H.page !== data.page) { H.page = data.page; select(null); }
+      /* already like that: nothing to apply — say so plainly instead of a "Done" that changed nothing */
+      const keep = JSON.stringify(snapshot()); a.run(); const same = JSON.stringify(snapshot()) === keep; restore(JSON.parse(keep));   // a dry run
+      if (same) return chat.widget(msg.id, { done: true, note: 'This page already works that way — nothing to change.' });
+      let did = '';
+      onLook({ ask: 'tips', run: () => { did = a.run(); H.sel = null; H.fx = '.hub-sec > *'; return `**Done:** ${did}.`; } });
+      return chat.widget(msg.id, { done: true, note: `Done: ${did}. Undo takes it back.` });
+    }
+    if (data.key === 'login' && act === 'offer') { onLook({ ask: 'player id hint' }); return chat.widget(msg.id, { done: true, note: 'Added to your Login page — written from your store page.' }); }
+    if (data.key === 'cats' && act === 'toggle') {
+      const c = data.items[i].label, shown = CATS.filter((x) => H.cats[x]);
+      if (!(H.cats[c] && shown.length === 1)) onLook({ ask: 'setting', run: () => { H.cats[c] = !H.cats[c]; H.fx = '.cats, .cards'; return `**${c}** ${H.cats[c] ? 'is on' : 'is off'} the store page.`; } });
+      return chat.widget(msg.id, { items: CATS.map((x) => ({ label: x, on: !!H.cats[x] })) });   // the last one can't go off
+    }
+    if (data.key === 'boards' && act === 'create') {
+      const both = data.picked === 0;
+      onLook({ ask: 'setting', run: () => { H.boards.b7 = true; H.boards.ball = both; H.fx = '.hub-frame'; return both ? '**Both boards** are on the hub.' : '**Weekly board only.**'; } });
+      return chat.widget(msg.id, { done: true, redo: false });
+    }
+  }
+  /* p.ask — typed (Newton answers it in a line) or a click in the bar (the magic on the canvas is the answer) */
+  /* what a request changed, in plain words — Newton shows it above his answer (Daria, 27.09) */
+  /* alike changes go in one line, so "another look" reads as four lines, not seventeen */
+  const LOOK_ONE = { btn: 'Buttons', rad: 'Corners', hfx: 'Headline effect', heroArt: 'Banner art', pal: 'Colours', font: 'Headline font', art: 'Art technique', bg: 'Background', deco: 'Pattern', surf: 'Card surface', mono: 'One colour or many', set: 'Icons', head: 'Header', accent: 'What leads the page', group: 'Store picks grouping' };
+  const LAYOUT_OF = { hero: 'banner', cards: 'store picks', news: 'news', rewards: 'daily rewards', leaders: 'leaderboard' };
+  const STYLE_OF = { card: 'items', day: 'reward tiles', newsCard: 'news' };
+  const SIZE_OF = { page: 'spacing', header: 'header', hero: 'banner', cards: 'item cards', news: 'news text', rewards: 'reward tiles' };
+  function changesOf(a, b) {
+    const out = [], names = BLOCK_NAME(), same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
+    const diff = (map, src) => Object.keys(map).filter((k) => a[src][k] !== b[src][k]).map((k) => map[k]);
+    diff(LOOK_ONE, 'look').forEach((x) => out.push(x));
+    const lay = Object.keys(LAYOUT_OF).filter((k) => b.blocks.includes(k) && a.look[k] !== b.look[k]).map((k) => LAYOUT_OF[k]);
+    if (lay.length) out.push(`New layout: ${lay.join(', ')}`);
+    const sty = diff(STYLE_OF, 'look'); if (sty.length) out.push(`New card style: ${sty.join(', ')}`);
+    const up = Object.keys(SIZE_OF).filter((k) => b.sizes[k] > a.sizes[k]).map((k) => SIZE_OF[k]);
+    const down = Object.keys(SIZE_OF).filter((k) => b.sizes[k] < a.sizes[k]).map((k) => SIZE_OF[k]);
+    if (up.length) out.push(`Bigger: ${up.join(', ')}`);
+    if (down.length) out.push(`Smaller: ${down.join(', ')}`);
+    if (a.sizes.rows !== b.sizes.rows) out.push(`Store picks rows: ${a.sizes.rows} → ${b.sizes.rows}`);
+    if (a.sizes.newsN !== b.sizes.newsN) out.push(`News shown: ${a.sizes.newsN} → ${b.sizes.newsN}`);
+    b.blocks.filter((k) => !a.blocks.includes(k)).forEach((k) => out.push(`Added ${names[k] || k}`));
+    a.blocks.filter((k) => !b.blocks.includes(k)).forEach((k) => out.push(`Removed ${names[k] || k}`));
+    if (!same(a.blocks.filter((k) => b.blocks.includes(k)), b.blocks.filter((k) => a.blocks.includes(k)))) out.push('Block order');
+    Object.keys({ ...a.locks, ...b.locks }).forEach((k) => { if (!!a.locks[k] !== !!b.locks[k]) out.push(`${b.locks[k] ? 'Kept' : 'Unlocked'} ${names[k] || k}`); });
+    if (!same(a.cats, b.cats)) out.push('Store categories shown');
+    if (!same(a.boards, b.boards)) out.push('Leaderboards shown');
+    if (a.loginText !== b.loginText) out.push('Player ID hint on Login');
+    if (a.heroSeed !== b.heroSeed) out.push('Banner image');
+    if (!same(a.artSeed, b.artSeed)) out.push('Item images');
+    if (a.images !== b.images) out.push(b.images ? 'Images for items without one' : 'Item images taken back');
+    if (a.tags.join() !== b.tags.join()) out.push('Styles');
+    return out;
+  }
+  let lastDid = null;
+  function onLook(p) {
+    lastDid = null;
+    if (!p) return null;
+    if (p.deselect) { select(null); return null; }
+    if (!p.ask) return null;
+    const before = snapshot();
+    let line, signals = false;
+    if (p.ask.includes('undo') || p.ask.includes('redo')) {
+      const redo = p.ask.includes('redo'), from = redo ? H.future : H.past, to = redo ? H.past : H.future;
+      const snap = from.pop();
+      if (!snap) return null;
+      to.push(before);
+      signals = snap.images !== before.images;   // images taken back: Newton's "no image" message returns
+      restore(snap);
+      line = redo ? '**Back again.**' : '**Back to how it was.**';
+      /* a step back to the published hub takes a change away; a step past it adds one */
+      changed(redo ? (H.past.length <= H.pubDepth ? -1 : 1) : (H.past.length >= H.pubDepth ? -1 : 1));
+    } else {
+      line = p.run ? p.run() : answer(p.ask);
+      if (line == null) return null;
+      if (JSON.stringify(snapshot()) === JSON.stringify(before)) { render(); return line; }   // nothing changed (a kept block): no step in the history
+      H.past.push(before); H.future = [];
+      if (H.past.length > 20) { H.past.shift(); H.pubDepth = Math.max(0, H.pubDepth - 1); }
+      changed();
+    }
+    const steps = changesOf(before, snapshot()), pg = PAGES.find((x) => x[0] === H.page);
+    if (steps.length) lastDid = { title: p.ask.match(/undo|redo/) ? (p.ask.includes('redo') ? 'Redid the change' : 'Undid the last change') : `Edited ${pg ? pg[1] : 'the hub'}`, steps };
+    keepLook();
+    /* the whole look changed (a style tag, the dice): the old look melts into the new one instead of the sparkle */
+    const pageNow = $('#stage > .hub-frame'), melt = H.fx === '.hub-frame' && pageNow ? pageNow.cloneNode(true) : null;
+    render();
+    if (signals || (p.ask.match(/undo|redo/) && settingsMsg())) AG.newton.refresh();   // undone: the setting's message shows it
+    if (melt) { H.fx = null; AG.morph($('#stage > .hub-frame'), melt); }
+    playFx();
+    return line;
+  }
+
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    if (!t.closest('#center') || dragClick) return;
+    const dd = t.closest('[data-dd-hub]'); if (dd) { e.stopPropagation(); toggleMenu(dd.dataset.ddHub); return; }
+    const pg = t.closest('[data-pg]'); if (pg) { AG.closeMenus(); AG.swap(() => { H.page = pg.dataset.pg; select(null); AG.newton.refresh('visit'); }, $('#stage')); return; }   // the new page's settings come to the chat
+    const eye = t.closest('[data-eye]');
+    if (eye) { H.hidden[eye.dataset.eye] = !H.hidden[eye.dataset.eye]; changed(); renderHeader(); renderCenter(); $('[data-menu="pages"]').innerHTML = pagesMenu(); return; }
+    const dv = t.closest('[data-dev]'); if (dv) { AG.closeMenus(); AG.swap(() => { H.device = dv.dataset.dev; keepLook(); render(); }, $('#stage')); return; }
+    const sty = t.closest('[data-sty]'); if (sty) { toggleStyle(sty.dataset.sty); return; }
+    const qa = t.closest('[data-ctx-ask]'); if (qa) { const ask = resolve(qa.dataset.ctxAsk); if (!ask || onLook({ ask }) == null) { ctxMiss = true; renderCtx(); } return; }   // a ready ask under the field — the same as typing it
+    const ad = t.closest('[data-add]'); if (ad) { AG.closeMenus(); addBlock(ad.dataset.add); return; }
+    if (t.closest('[data-add-decide]')) { AG.closeMenus(); decideBlocks(); return; }
+    if (t.closest('.dd')) return;
+    const tl = t.closest('[data-tool]');
+    if (tl) {
+      if (tl.getAttribute('aria-disabled') === 'true') return;
+      const a = tl.dataset.tool;
+      if (a === 'deselect') select(null);
+      else if (a === 'up') select(blockOf(H.sel));
+      else if (a === 'roll') onLook({ ask: 'another look' });
+      else onLook({ ask: a });   // undo, redo
+      return;
+    }
+    /* the field next to the element: its dice and lock */
+    const cx = t.closest('[data-ctx]');
+    if (cx) {
+      const b = blockOf(H.sel);
+      if (cx.getAttribute('aria-disabled') === 'true') return;
+      if (cx.dataset.ctx === 'remove') { removeBlock(b); return; }
+      if (cx.dataset.ctx === 'dice') onLook({ ask: isItems(H.sel) ? (b === 'rewards' ? 'another tile style' : 'another card style') : 'change layout' });
+      else onLook({ ask: H.locks[b] ? 'let it change again' : 'keep this one' });
+      return;
+    }
+    if (t.closest('#ctx')) return;
+    const c = t.closest('[data-chip]'); if (c) { e.stopPropagation(); chip(c.dataset.chip); return; }
+    /* two levels (Daria, 26.09): a click in a block takes the block; with the block selected, a click on a card
+       takes its cards (all of them — they share one look) */
+    const el = t.closest('[data-el]');
+    if (el) {
+      const k = el.dataset.el;
+      if (isItems(k)) { const b = blockOf(k); select(H.sel === b || H.sel === k ? k : b); }
+      else select(k);
+      return;
+    }
+    const h = t.closest('[data-h]');
+    if (h && h.dataset.h === 'canvas') select(null);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if ($('.dd__menu:not([hidden])')) { AG.closeMenus(); return; }
+    if (H.sel && (!e.target.closest('input, textarea') || e.target.closest('#ctx'))) select(isItems(H.sel) ? blockOf(H.sel) : null);   // Esc — one level up
+  });
+  /* the field next to the element: plain words → the change, right there with the magic */
+  document.addEventListener('submit', (e) => {
+    if (!e.target.matches('[data-ctx-form]')) return;
+    e.preventDefault();
+    const text = $('[data-ctx-in]').value, ask = resolve(text);
+    if (!ask) { ctxMiss = true; renderCtx(); $('[data-ctx-in]').focus(); return; }
+    if (onLook({ ask }) == null) { ctxMiss = true; renderCtx(); }
+    const i = $('[data-ctx-in]'); if (i) i.focus({ preventScroll: true });
+  });
+  document.addEventListener('ag:change', render);
+  window.addEventListener('hashchange', () => { const p = location.hash.slice(1); if (PAGES.some((x) => x[0] === p)) AG.swap(() => { H.page = p; select(null); AG.newton.refresh('visit'); }, $('#stage')); });
+  if (window.ResizeObserver) new ResizeObserver(() => { fit(); renderCtx(); }).observe($('#canvas'));
+  render();
+  /* the look's fonts arrive after the first draw: once they are in, the page is measured again (the field sits on its block) */
+  if (document.fonts) document.fonts.addEventListener('loadingdone', () => { fit(); renderCtx(); });
+  if (!EMBED) AG.newton.mount({ page: 'hub', hubPage: () => H.page, advice: adviceMsg, look: () => ({ keys: ALL_ASKS }), onLook, did: () => lastDid, settings: settingsMsg, onSetting });   // look: what a typed request can ask for
+})();
+</script>
+<div class="release-narrow" role="note"><div><b>Open on a computer</b><span>This prototype is made for screens 1280px and wider.</span></div></div>
+<style>.release-narrow{display:none}@media (max-width:1023px){.release-narrow{display:grid;position:fixed;inset:0;z-index:2147483000;place-items:center;padding:24px;background:var(--color-bg-secondary,#f1f5f9);text-align:center}.release-narrow>div{display:flex;flex-direction:column;gap:8px;max-width:320px}.release-narrow b{font:600 22px/28px var(--font-sans,system-ui);color:var(--color-text-primary,#000)}.release-narrow span{font:400 14px/20px var(--font-sans,system-ui);color:var(--color-text-secondary,#475569)}}</style>
+</body>
+</html>

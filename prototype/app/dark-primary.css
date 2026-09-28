@@ -1,0 +1,79 @@
+/* Buttons by meaning (Daria, 27.09): goal — dark primary; Newton sets to work — dark with a sheen (below); side action — outline;
+   going somewhere, cancelling — tertiary.
+   Trying out (Daria, 27.09): primary buttons dark, like the send button in Newton's input, instead of the kit's blue.
+   The kit isn't touched — this file only repaints .ag-btn--primary on top of it; disabled stays the kit's grey,
+   links, rings, spinners and selection stay blue. To go back to blue: remove the one <link> to this file on each page. */
+.ag-btn--primary:not(.ag-btn--outline):not(.ag-btn--tertiary):not(.ag-btn--link):not(:disabled):not([aria-disabled="true"]) {
+  --bg: var(--foreground); --border: var(--foreground); --text: var(--color-text-inverse); }
+.ag-btn--primary:not(.ag-btn--outline):not(.ag-btn--tertiary):not(.ag-btn--link):not(:disabled):not([aria-disabled="true"]):hover {
+  --bg: var(--color-text-secondary-hover); --border: var(--color-text-secondary-hover); }
+.ag-btn--primary:not(.ag-btn--outline):not(.ag-btn--tertiary):not(.ag-btn--link):not(:disabled):not([aria-disabled="true"]):active,
+.ag-btn--primary:not(.ag-btn--outline):not(.ag-btn--tertiary):not(.ag-btn--link):not(:disabled)[aria-expanded="true"] {
+  --bg: var(--color-text-secondary); --border: var(--color-text-secondary); }
+/* the outline primary fills on hover — dark too */
+.ag-btn--primary.ag-btn--outline { --border: var(--foreground); }
+.ag-btn--primary.ag-btn--outline:not(:disabled):hover { --bg: var(--foreground); --border: var(--foreground); --text: var(--color-text-inverse); }
+
+/* The Newton button (Daria, 27.09): every goal that sets Newton working on — every "Decide … for me", "Show me the magic",
+   "Build this event", an alert's fix. Its own colour — a grey violet (the kit's dark violet mixed with the goal grey), so it reads
+   apart from the goal buttons; white words stay readable. Inside, soft blurred blots of Newton's colours drift slowly (each
+   its own way, sized to the button); on hover they glow a little more. The spark goes after the words. Nothing moves for
+   those who turned motion off. */
+.ag-btn--primary.ag-btn--ai:not(.ag-btn--outline):not(.ag-btn--tertiary):not(.ag-btn--link):not(:disabled):not([aria-disabled="true"]),
+.ag-btn--primary.ag-btn--ai:not(.ag-btn--outline):not(.ag-btn--tertiary):not(.ag-btn--link):not(:disabled):not([aria-disabled="true"]):hover,
+.ag-btn--primary.ag-btn--ai:not(.ag-btn--outline):not(.ag-btn--tertiary):not(.ag-btn--link):not(:disabled):not([aria-disabled="true"]):active {
+  /* trying (Daria, 28.09): the kit's violet-300 (#C4B5FD) under the blots, dark violet words. Was a grey violet —
+     color-mix(in oklab, var(--color-text-violet-solid) 55%, var(--foreground)) with white words */
+  --nw-btn: var(--color-violet-300);
+  --bg: var(--nw-btn); --border: var(--nw-btn); --text: var(--color-text-violet-solid); }
+.ag-btn--ai { isolation: isolate; overflow: hidden; }
+/* three blurred blots, each sized to the button (so a wide button has them as much as a small one), drifting their own ways */
+.ag-btn--ai::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; opacity: .38; filter: blur(7px);
+  background: radial-gradient(closest-side, var(--color-fg-pink-primary), transparent) no-repeat,
+    radial-gradient(closest-side, var(--color-fg-brand-primary-hover), transparent) no-repeat,
+    radial-gradient(closest-side, var(--color-fg-violet-secondary), transparent) no-repeat;
+  background-size: 55% 240%, 50% 220%, 45% 260%; animation: ag-ai-float 10s ease-in-out infinite alternate; transition: opacity var(--dur-2, .18s) ease; }
+.ag-btn--ai:hover::before { opacity: .55; }
+.ag-btn--ai::before { display: none; }   /* no blots for now (Daria, 28.09): just the violet — the rules above stay to bring them back */
+@keyframes ag-ai-float {
+  0% { background-position: 0% 50%, 100% 0%, 60% 100%; }
+  33% { background-position: 45% 0%, 15% 100%, 100% 40%; }
+  66% { background-position: 100% 80%, 0% 30%, 20% 0%; }
+  100% { background-position: 30% 100%, 85% 60%, 0% 60%; } }
+@media (prefers-reduced-motion: reduce) { .ag-btn--ai::before { animation: none; } }
+
+/* the icon goes after the words, on every button (Daria, 27.09: "buttons look better with the icon on the right") —
+   one rule for all, whatever order the markup has */
+.ag-btn > svg { order: 1; }
+
+/* The Newton button, new form (Daria, 28.09): a pill like the suggestions over the input, the kit's violet-200 (#DDD6FE),
+   dark violet words, and round it the shining border of a selected block in Hub — his light blue, glowing, with a glint of
+   his colours travelling round. One rule for every "Decide…" and every Newton button. */
+.ag-btn--primary.ag-btn--ai:not(.ag-btn--outline):not(.ag-btn--tertiary):not(.ag-btn--link):not(:disabled):not([aria-disabled="true"]),
+.ag-btn--primary.ag-btn--ai:not(.ag-btn--outline):not(.ag-btn--tertiary):not(.ag-btn--link):not(:disabled):not([aria-disabled="true"]):hover,
+.ag-btn--primary.ag-btn--ai:not(.ag-btn--outline):not(.ag-btn--tertiary):not(.ag-btn--link):not(:disabled):not([aria-disabled="true"]):active {
+  --nw-btn: var(--color-fg-brand-tertiary); --bg: var(--nw-btn); --border: var(--nw-btn); --text: var(--color-text-primary); }   /* #F0F9FF — the kit's brand tertiary, dark words (Daria, 28.09; was #EDE9FE) */
+.ag-btn--ai { position: relative; overflow: visible; border-radius: 9999px; }
+.ag-btn--ai.ag-btn--sm { min-height: 32px; padding: 6px 12px; }
+.ag-btn--ai::after { content: ""; position: absolute; inset: -3px; border-radius: inherit; padding: 1.5px; pointer-events: none;
+  background: radial-gradient(transparent, transparent, var(--color-fg-pink-primary), var(--color-text-inverse), var(--color-fg-brand-primary-hover), transparent, transparent) 0 0 / 250% 250%,
+    linear-gradient(var(--color-fg-brand-primary-hover), var(--color-fg-brand-primary-hover));
+  -webkit-mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  filter: drop-shadow(0 0 4px var(--color-fg-brand-primary-hover)) drop-shadow(0 0 6px var(--color-fg-pink-primary));
+  animation: ag-ai-shine 10s ease-in-out infinite; }   /* slower and softer (Daria, 28.09) */
+.ag-btn--ai:hover::after { filter: drop-shadow(0 0 6px var(--color-fg-brand-primary-hover)) drop-shadow(0 0 10px var(--color-fg-pink-primary)); }
+.ag-btn--ai:disabled::after, .ag-btn--ai[aria-disabled="true"]::after { display: none; }
+@keyframes ag-ai-shine { 0% { background-position: 0% 0%, 0 0; } 50% { background-position: 100% 100%, 0 0; } 100% { background-position: 0% 0%, 0 0; } }
+@media (prefers-reduced-motion: reduce) { .ag-btn--ai::after { animation: none; } }
+
+/* Newton at work on a Decide (the event's "Deciding for you"): the same violet and the same shining edge as the button that
+   started it, so the two read as one action (Daria, 28.09) */
+.cw.cw--ai { position: relative; overflow: visible; background: var(--color-fg-brand-tertiary); border-color: var(--color-fg-brand-tertiary); }
+.cw.cw--ai::after { content: ""; position: absolute; inset: -3px; border-radius: 19px; padding: 1.5px; pointer-events: none;
+  background: radial-gradient(transparent, transparent, var(--color-fg-pink-primary), var(--color-text-inverse), var(--color-fg-brand-primary-hover), transparent, transparent) 0 0 / 250% 250%,
+    linear-gradient(var(--color-fg-brand-primary-hover), var(--color-fg-brand-primary-hover));
+  -webkit-mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  filter: drop-shadow(0 0 4px var(--color-fg-brand-primary-hover)) drop-shadow(0 0 6px var(--color-fg-pink-primary));
+  animation: ag-ai-shine 10s ease-in-out infinite; }
+.cw.cw--ai .ag-progress { background: var(--color-fg-primary); }
+@media (prefers-reduced-motion: reduce) { .cw.cw--ai::after { animation: none; } }

@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Aghanim · AI-first dashboard prototype">
+<meta property="og:description" content="Newton, the AI in the dashboard: onboarding, Home, a Halloween event built in the chat, the hub builder. Best on a computer, 1280px and wider.">
+<meta property="og:url" content="https://daria-km.github.io/aghanim-prototype/prototype/Dashboard.html">
+<meta property="og:image" content="https://daria-km.github.io/aghanim-prototype/preview.png">
+<meta property="og:image:width" content="1440">
+<meta property="og:image:height" content="756">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Newton, the AI in the dashboard: onboarding, Home, a Halloween event built in the chat, the hub builder. Best on a computer, 1280px and wider.">
+<script>(function(){try{var v='78fca03',k="aghanim-proto-build",had=localStorage.getItem("aghanim-proto-v1")||localStorage.getItem("aghanim-proto-chat");if(localStorage.getItem(k)!==v){localStorage.removeItem("aghanim-proto-v1");localStorage.removeItem("aghanim-proto-chat");localStorage.setItem(k,v);if(had&&!/Onboarding\.html/.test(location.pathname))location.replace("Onboarding.html#start");}}catch(e){}})();</script>
+
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aghanim · Dashboard</title>
+<link rel="stylesheet" href="../aghanim-ui/tokens.css?v=78fca03">
+<link rel="stylesheet" href="../aghanim-ui/components.css?v=78fca03">
+<link rel="stylesheet" href="app/app.css?v=78fca03">
+<link rel="stylesheet" href="app/chat.css?v=78fca03">
+<link rel="stylesheet" href="app/dark-primary.css?v=78fca03"><!-- trying dark primary buttons (Daria, 27.09); remove this line to go back to blue -->
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Rubik:wght@500;700&family=Space+Grotesk:wght@500;700&family=Cinzel:wght@700&family=Orbitron:wght@700&family=Pixelify+Sans:wght@600&family=Fredoka:wght@600&family=Russo+One&family=Bungee&family=Luckiest+Guy&family=Baloo+2:wght@800&family=Grenze+Gotisch:wght@700&family=Silkscreen:wght@700&family=Caveat+Brush&display=swap" rel="stylesheet">   <!-- the hub's fonts: the event cards in the chat are drawn in the hub's look -->
+<style>
+/* on the cards' grid (Daria, 28.09): the funnel takes two card columns, Latest the third — edges line up, heights match */
+.two-col { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+.two-col > :first-child { grid-column: span 2; }
+.col { display: flex; flex-direction: column; gap: 16px; }
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.metric { display: flex; flex-direction: column; gap: 4px; }
+.metric b { font: 700 28px/32px var(--font-sans); color: var(--color-text-primary); }
+.metric b.ok { font-size: 16px; color: var(--color-text-success-primary); }
+.metric span { font: 400 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+.metric b.bad { font-size: 16px; color: var(--color-text-error-primary); }
+.metric .up { color: var(--color-text-success-primary); font-weight: 600; }
+/* the way to a purchase: horizontal bars, one hue, 4px rounded ends from the left baseline */
+.flow { display: flex; flex-direction: column; gap: 16px; }
+.flow__rows { display: flex; flex-direction: column; gap: 12px; }
+.flow__row { display: grid; grid-template-columns: 112px minmax(0, 1fr) 84px; align-items: center; gap: 12px; }
+.flow__label { font: 500 14px/20px var(--font-sans); color: var(--color-text-secondary); }
+.flow__track { height: 20px; border-radius: 4px; background: var(--color-fg-secondary); overflow: hidden; }
+.flow__track i { display: block; height: 100%; border-radius: 0 4px 4px 0; background: var(--color-fg-brand-primary); }
+.flow__val { display: flex; align-items: baseline; justify-content: flex-end; gap: 6px; }
+.flow__val b { font: 600 16px/22px var(--font-sans); color: var(--color-text-primary); }
+.flow__val small { min-width: 30px; text-align: right; font: 400 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+.flow__row:hover .flow__track i { background: var(--color-fg-brand-primary-hover); }
+.metric .text-caption-md { color: var(--color-text-secondary); }
+.funnel { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
+.funnel__col { display: flex; flex-direction: column; gap: 6px; }
+.funnel__bar { height: 120px; display: flex; align-items: flex-end; border-radius: var(--radius-md); background: var(--color-fg-secondary); overflow: hidden; }
+.funnel__bar i { display: block; width: 100%; background: var(--color-fg-brand-primary); border-radius: var(--radius-md) var(--radius-md) 0 0; }
+.funnel__col.is-gap .funnel__bar i { background: var(--color-fg-warning-solid); }
+.funnel__col b { font: 700 28px/32px var(--font-sans); }
+.funnel__col span { font: 500 14px/20px var(--font-sans); color: var(--color-text-secondary); }
+.funnel__col small { font: 400 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+.funnel__col.is-gap small { color: var(--color-text-warning-solid); }
+.thumb { width: 36px; height: 36px; border-radius: var(--radius-md); flex-shrink: 0; display: grid; place-items: center; background: #2A2150; } /* item art = the hub's look (AG.skin), game colours */
+.thumb > svg { width: 72%; height: auto; }
+.thumb--none { background: var(--color-fg-secondary); border: 1px dashed var(--color-border-primary); font: 500 8px/10px var(--font-sans); color: var(--color-text-tertiary); text-align: center; }
+.sku { font: 500 12px/16px var(--font-mono); color: var(--color-text-secondary); }
+/* sized by the page's own width (container), not the window: the Newton panel takes its share of it */
+@container page (max-width: 900px) { .two-col { grid-template-columns: 1fr; } .two-col > :first-child { grid-column: auto; } }
+@container page (max-width: 760px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container page (max-width: 520px) { .funnel { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* a row Newton just added from the chat: it lights up once, so the eye finds it (handoff 6.10) */
+tr.is-new td, .is-new > td { animation: nw-new 2.6s ease-out, magic-in .9s ease-out; }   /* + the magic (app.js AG.magic) */
+@keyframes nw-new { 0%, 35% { background: var(--color-fg-brand-tertiary); } 100% { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { tr.is-new td { animation: none; background: var(--color-fg-brand-tertiary); } }
+.ev-title { display: flex; align-items: baseline; gap: 8px; font: 600 16px/22px var(--font-sans); color: var(--color-text-primary); }
+.updates { display: flex; flex-direction: column; gap: 4px; }
+.updates .section-title { margin-bottom: 6px; }
+.updates__row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--color-border-secondary); }
+.updates__dot { width: 8px; height: 8px; flex-shrink: 0; border-radius: 9999px; }
+.updates__dot--success { background: var(--color-fg-success-solid); }
+.updates__dot--brand { background: var(--color-fg-brand-primary); }
+.updates__txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.updates__txt b { font: 500 14px/20px var(--font-sans); color: var(--color-text-primary); }
+.updates__txt span { font: 400 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
+.updates__when { font: 400 12px/16px var(--font-sans); color: var(--color-text-tertiary); white-space: nowrap; }
+.page-none { font: 400 14px/20px var(--font-sans); color: var(--color-text-tertiary); }
+/* an empty section is never blank (Daria, 27.09): the table as it will be — real columns, kit skeleton rows —
+   and over it how to add the first one and what will be kept here */
+.skel { position: relative; }
+.skel .ag-skeleton { height: 12px; animation: none; }
+.skel tbody td { height: 52px; }
+.skel__note { margin: -8px 0 0; font: 400 14px/20px var(--font-sans); color: var(--color-text-tertiary); }
+.skel__note b { font-weight: 600; color: var(--color-text-secondary); }
+.page-none b { font-weight: 600; color: var(--color-text-secondary); }
+.ev-title span { font: 400 14px/20px var(--font-sans); color: var(--color-text-tertiary); }
+</style>
+</head>
+<body>
+<div class="app app--fixed">
+  <header class="app__header" id="app-header"></header>
+  <div class="app__body">
+    <nav class="ag-sidebar app__side" aria-label="Dashboard" id="side"></nav>
+    <main class="app__main" data-magic-host><div class="page" id="page"></div></main>
+    <aside class="app__chat" id="nw-chat" aria-label="Newton"></aside>
+  </div>
+</div>
+
+<script src="app/app.js?v=78fca03"></script>
+<script src="app/chat.js?v=78fca03"></script>
+<script src="app/newton.js?v=78fca03"></script>
+<script src="app/hub-icons.js?v=78fca03"></script>
+<script src="app/hub-skin.js?v=78fca03"></script>
+<script>
+(() => {
+  const { $, $$, icon, nwIcon, nwLabel } = AG;
+  AG.mountHeader('dashboard');
+
+  /* ---------- sidebar (shared component, app.js) ---------- */
+  const route = () => location.hash.slice(1) || 'home';
+  AG.mountSidebar('dashboard', () => { const n = (AG.state.drafts['marketing-campaigns'] || []).length; return n ? { 'marketing-campaigns': n } : {}; });   // Newton's drafts waiting in Campaigns
+
+  /* ---------- action cards: what to do (app/newton.js holds them and their tasks) ----------
+     One size for all, so a row never jumps. Click → the task in the chat; done → the card leaves. */
+  function ctaGrid(r) {
+    const list = AG.newton.cards(r);
+    if (!list.length) return '';
+    /* a signal (Daria, 27.09): the title (a lightning bolt when it's broken), one supporting line, and at the bottom the
+       number where there is one, the arrow on the right. Three levels: broken / tolerable / advice (app/newton.js). */
+    const LV = { 1: 'Broken', 2: 'Needs a look', 3: 'Advice' };
+    return `<section class="cta-grid${list.length === 4 ? ' cta-grid--4' : ''}" aria-label="Ready for you">${list.map((c) => `<article class="cta cta--lv${c.lv || 3}" data-task="${c.id}" tabindex="0" role="button" aria-label="${LV[c.lv || 3]}: ${c.title}. ${c.cta}">
+        <div class="cta__head">${c.type ? `<span class="cta__type">${icon(c.lv === 1 ? 'bolt' : AG.TYPE_ICON[c.type] || 'bolt', 'cta__bolt')}${c.type}</span>` : ''}<div class="cta__trow"><b class="cta__title">${String(c.title).replace(/(\S+)$/, `<span class="cta__end">$1${icon('arrow', 'cta__arrow')}</span>`)}</b></div></div>
+        ${c.sub ? `<p class="cta__sub">${String(c.sub).replace(/\.$/, '')}</p>` : ''}
+        ${c.sig ? `<div class="cta__foot"><span class="cta__num">${c.sig.bar != null ? `<span class="ag-ring cta__ring" style="--v:${c.sig.bar}" aria-hidden="true"></span>` : ''}<b>${c.sig.v}</b>${c.sig.u ? `<span>${c.sig.u}</span>` : ''}</span></div>` : ''}
+      </article>`).join('')}</section>`;
+  }
+
+  /* ---------- Home ---------- */
+  const ring = (v, total) => `<div class="ag-ring launch__ring" style="--v:${(v / total) * 100}"><span>${v}/${total}</span></div>`;
+
+  function verifyCard() {
+    const v = AG.state.verify;
+    if (v.status === 'approved') return '';
+    if (v.status === 'review') return `<article class="ag-card ag-card--raised launch">${ring(4, 4)}
+      <div class="launch__body"><div class="launch__title"><h2 class="text-title-t5">Verify your company</h2><span class="ag-badge ag-badge--orange-tertiary ag-badge--sm">In review</span></div>
+      <p class="text-paragraph-sm text-secondary">We'll email you if anything needs changes. Keep working in the meantime.</p></div>
+      <button class="ag-btn ag-btn--outline" data-a="verify">View status</button></article>`;
+    return `<article class="ag-card ag-card--raised launch">${ring(v.step, AG.VERIFY_TOTAL)}
+      <div class="launch__body"><div class="launch__title"><h2 class="text-title-t5">Verify your company</h2><span class="ag-badge ag-badge--blue-tertiary ag-badge--sm">Start here</span></div>
+      <p class="text-paragraph-sm text-secondary">Review takes the longest, so start here. Unlocks publishing and payments.</p></div>
+      <button class="ag-btn ag-btn--primary" data-a="verify">${v.step ? 'Continue' : 'Start'}</button></article>`;
+  }
+  // once the company is verified, finishing Connect is the main thing on Home — its button is the one blue one
+  function connectCard() {
+    const c = AG.state.connect;
+    if (c >= AG.CONNECT_TOTAL) return '';
+    const sub = c >= 3 ? 'Purchases reach the game. Two steps left so players find it.' : 'So purchases reach players, and players find your hub.';
+    return `<article class="ag-card ag-card--raised launch">${ring(c, AG.CONNECT_TOTAL)}
+      <div class="launch__body"><div class="launch__title"><h2 class="text-title-t5">Connect your game</h2></div>
+      <p class="text-paragraph-sm text-secondary">${sub}</p></div>
+      <button class="ag-btn ${AG.verified() ? 'ag-btn--primary' : 'ag-btn--outline'}" data-a="connect">${c ? 'Continue' : 'Set up'}</button></article>`;
+  }
+  /* the hub, big — the same block in every state; only what it says follows the state */
+  function reviewBlock() {
+    const live = AG.state.published, can = AG.canPublish();
+    /* a promo banner (Daria, 28.09, after her reference): the heading, one line with the key words in the game's accent, our
+       buttons — Publish first while there is one — and on the right the hub's own art in a soft glow. No laptop, no phone.
+       One flat colour: the hub's card colour, its words in the hub's text colour. On a dark one the main button is the kit's
+       white one and the second a quiet text button in the hub's text colour, so Publish still leads */
+    const sk = AG.skin.current(), c = sk.c, dark = !c.light;
+    const main = dark ? 'ag-btn--outline' : 'ag-btn--primary', second = dark ? 'ag-btn--tertiary review__ghost' : 'ag-btn--outline';
+    const pub = !live && can;
+    const [a1, a2, a3] = sk.w.hero || ['locked-chest', 'gems', 'two-coins'];
+    return `<section class="review review--promo${dark ? ' review--dark' : ''}" style="--rv-bg:${c.light ? c.bg : c.surface};--rv-fg:${c.fg};--rv-accent:${c.primary};--rv-glow:${AG.skin.hexA(c.primary, .32)}" aria-labelledby="reviewTitle">
+      <div class="review__info">
+        <div class="review__head"><h2 class="review__title text-title-t1" id="reviewTitle">${live ? 'Your hub is live' : 'Your hub is ready'}</h2>
+          <p>${live ? 'pixelraiders.aghanim.store' : '<em>Built by Newton</em> from your App Store page'}</p></div>
+        <div class="review__actions">
+          ${pub ? `<button class="ag-btn ${main} ag-btn--lg" data-a="publish">Publish</button>` : ''}
+          <a class="ag-btn ${pub ? second : main} ag-btn--lg" href="Hub.html">Open hub</a>
+        </div>
+      </div>
+      <div class="review__art" aria-hidden="true">
+        <span class="review__art-main">${AG.skin.artSvg(a1, sk)}</span><span class="review__art-s1">${AG.skin.artSvg(a2, sk)}</span><span class="review__art-s2">${AG.skin.artSvg(a3, sk)}</span>
+      </div>
+      <!-- the laptop and the phone with the live hub, kept (Daria, 28.09: not in the banner):
+           AG.hubPreview('desktop'), AG.hubPreview('phone') in .laptop / .phone -->
+    </section>`;
+  }
+  /* what happened: a quiet list, not cards — the first purchase is news, not a task */
+  function updates() {
+    const h = AG.homeState(), v = AG.state.verify, fresh = v.approvedAt && Date.now() - v.approvedAt < 6 * 3600e3;
+    const rows = [
+      ...(h === 3 ? [['success', 'First purchase', 'Starter Pack · $4.99', 'Sep 8']] : []),
+      ...(h >= 2 ? [['brand', 'Hub published', 'pixelraiders.aghanim.store', h === 3 ? 'Sep 7' : 'Today']] : []),
+      ...(AG.verified() ? [['brand', 'Company verified', 'Payments and publishing are on', fresh ? 'Just now' : h === 3 ? 'Sep 5' : 'Yesterday']] : [])
+    ];
+    if (!rows.length) return '';
+    return `<section class="ag-card updates" aria-labelledby="updTitle"><div class="section-title" id="updTitle">Latest</div>
+      ${rows.map(([t, a, b, when]) => `<div class="updates__row"><span class="updates__dot updates__dot--${t}"></span>
+        <span class="updates__txt"><b>${a}</b><span>${b}</span></span><span class="updates__when">${when}</span></div>`).join('')}</section>`;
+  }
+  const connectRow = () => (AG.state.connect < AG.CONNECT_TOTAL ? `<div class="launch-row">${connectCard()}</div>` : '');
+
+  /* the heading of Home says where the business is, in one line (Daria, 27.09: "Hello, Daria" was said already, Newton has
+     talked to her since; "your hub is ready" repeats the big block under it). Not the numbers — Newton gives those in the chat. */
+  /* just the heading (Daria, 28.09): the line under it said again what the cards and Newton already say */
+  const homeHead = (title) => `<div class="page__head"><div><h1 class="text-page-title">${title}</h1></div></div>`;   // the same size as every page (Daria, 28.09)
+  function home1() {
+    /* what stands between the hub and the first sale — and is yours to do (verification in review is waiting, not a step) */
+    const review = AG.state.verify.status === 'review', toVerify = !AG.verified() && !review, toConnect = AG.state.connect < 3;
+    const left = (toVerify ? 1 : 0) + (toConnect ? 1 : 0);
+    const head = left === 2 ? homeHead('Two steps from your first sale', 'Verify the company and connect the game. The hub is already built.')
+      : left === 1 ? homeHead('One step from your first sale', toConnect ? `Connect the game.${review ? ' Verification is in review.' : ' Then the hub can go live.'}` : 'Verify the company, and the hub can go live.')
+      : review ? homeHead('Almost ready to go live', 'The game is connected. Publishing waits for verification — it’s in review.')
+      : homeHead('Ready to go live', 'Everything that blocks publishing is done.');
+    /* the launch (verify, connect) is a card like the others since 27.09 — verifyCard / connectCard are kept, not drawn */
+    return `${head}
+      ${ctaGrid('home')}
+      ${updates()}
+      ${reviewBlock()}`;   // Latest shows once something happened (the review came back — Daria, 28.09)
+  }
+
+  /* Home 2 and 3: finish the launch first (Connect on top), then what to do, then what's going on */
+  /* Home 2 and 3 show one set (Daria, 28.09: first one set, then another, confuses): four big numbers with their change, then
+     the way to a purchase as one chart — visited → logged in → opened an item → bought, each step's share of the one before.
+     Before the first sale the money reads 0 and the chart shows where players stop. */
+  const metric = ([l, v, sub, cls]) => `<div class="ag-card metric"><span class="text-caption-md">${l}</span><b${cls ? ` class="${cls}"` : ''}>${v}</b><span>${sub}</span></div>`;
+  function metricsRow(h) {
+    const linked = AG.state.connect >= 3;
+    const integ = linked ? ['Integration', 'All good', 'Last webhook 2 min ago', 'ok'] : ['Integration', 'Not connected', 'Purchases can’t reach players', 'bad'];
+    const rows = h === 3
+      ? [['Revenue, 7 days', '$12,480', '<span class="up">↑ 18%</span> vs last week'], ['Paying players', '1,204', '<span class="up">↑ 96</span> this week'], ['Company USD Balance', '$9,870', 'Paid out monthly'], integ]
+      : [['Revenue, 7 days', '$0', 'No sales yet'], ['Paying players', '0', 'No sales yet'], ['Company USD Balance', '$0', 'Paid out monthly'], integ];
+    return `<div class="metrics">${rows.map(metric).join('')}</div>`;
+  }
+  /* the way to a purchase: one series, one hue, horizontal bars on a common scale (the first step = the full track);
+     the numbers in text ink beside them, the share of the step before as a quiet note; a tooltip per row */
+  function funnelCard(h) {
+    const steps = h === 3 ? [['Visited the hub', 9640], ['Logged in', 5210], ['Opened an item', 2980], ['Bought', 1204]]
+      : [['Visited the hub', 312], ['Logged in', 128], ['Opened an item', 57], ['Bought', 0]];
+    const top = steps[0][1], fmt = (n) => n.toLocaleString('en-US');
+    const drops = steps.map(([, v], i) => (i ? 1 - v / steps[i - 1][1] : 0)), worst = drops.indexOf(Math.max(...drops.slice(1, h === 3 ? 4 : 3)));
+    return `<section class="ag-card flow" aria-labelledby="flowTitle">
+      <div class="section-title" id="flowTitle">On the way to a purchase <span>${h === 3 ? 'Last 7 days' : 'Last 24 hours'}</span></div>
+      <div class="flow__rows">${steps.map(([l, v], i) => {
+        const share = i ? Math.round(v / steps[i - 1][1] * 100) : 100;
+        const note = i === 0 ? 'everyone who came' : v === 0 ? 'waiting for the first one' : `${share}% of the step before${i === worst ? ' · the biggest drop' : ''}`;
+        return `<div class="flow__row" data-hint="${l}: ${fmt(v)} · ${note}"><span class="flow__label">${l}</span>
+          <span class="flow__track"><i style="width:${Math.max(v ? 1.5 : 0, v / top * 100)}%"></i></span>
+          <span class="flow__val"><b>${fmt(v)}</b><small>${i ? (v ? `${share}%` : '—') : ''}</small></span></div>`;
+      }).join('')}</div>
+    </section>`;
+  }
+  function home2() {
+    return `${homeHead('Waiting for the first purchase')}
+      ${metricsRow(2)}
+      ${ctaGrid('home')}
+      <div class="two-col">${funnelCard(2)}${updates()}</div>
+      ${reviewBlock()}`;
+  }
+  // the funnel card (hidden since 28.09, kept to bring back)
+  //     return `${homeHead('Live — waiting for the first purchase', 'Players are coming in. Help them get from the hub to the store.')}
+  //       ${ctaGrid('home')}
+  //       <div class="two-col">
+  //         <section class="ag-card" style="display:flex;flex-direction:column;gap:16px">
+  //           <div class="section-title">Players on the way to a purchase <span>Last 24 hours · live</span></div>
+  //           <div class="funnel">${funnel.map((f) => `<div class="funnel__col${f[4] ? ' is-gap' : ''}"><div class="funnel__bar"><i style="height:${f[2]}%"></i></div><b>${f[0]}</b><span>${f[1]}</span><small>${f[3]}</small></div>`).join('')}</div>
+  //         </section>
+  //         ${updates()}
+  //       </div>
+  //
+  function home3() {
+    return `${homeHead('A good week for Pixel Raiders')}
+      ${metricsRow(3)}
+      ${ctaGrid('home')}
+      <div class="two-col">${funnelCard(3)}${updates()}</div>
+      ${reviewBlock()}`;
+  }
+
+
+
+  /* ---------- Store · Items ---------- */
+  const storeUI = { filter: 'all' };
+  function store() {
+    const s = AG.state;
+    const noImg = AG.items.filter((it) => !AG.hasImage(it));
+    /* your own drafts count and filter like the rest (QA 28.09: a new unlinked item wasn't in "Not linked") */
+    const all = (AG.state.drafts.store || []).slice().reverse();
+    const unlinked = AG.items.filter((it) => !it.sku).concat(all.filter((d) => !d.sku));
+    const rows = AG.items.filter((it) => storeUI.filter === 'all' || (storeUI.filter === 'img' ? !AG.hasImage(it) : !it.sku));
+    const mine = all.filter((d) => storeUI.filter === 'all' || (storeUI.filter === 'sku' && !d.sku));
+    return `${head('Items', 'Everything players can buy on your hub.')}
+      ${ctaGrid('store')}
+      <div class="filters">${[['all', 'All'], ...(noImg.length ? [['img', `No image · ${noImg.length}`]] : []), ...(unlinked.length ? [['sku', `Not linked · ${unlinked.length}`]] : [])].map((f) => `<button class="filter${storeUI.filter === f[0] ? ' is-active' : ''}" data-a="f-${f[0]}">${f[1]}</button>`).join('')}</div>
+      <div class="table-card"><table class="ag-table"><thead><tr><th>Item</th><th>Price</th><th>Linked to</th><th>Status</th><th>Made by</th></tr></thead><tbody>
+        ${mine.map((d) => `<tr class="${AG.newton.fresh('draft:store:' + d.title) ? 'is-new' : ''}"><td>${ent(d.title, d.sub)}</td><td>${d.cols[0]}</td>
+          <td>${d.sku ? `<span class="sku">${d.sku}</span>` : notLinkedBadge}</td><td>${draftSt()}</td><td>${d.by ? byYou : nwMark()}</td></tr>`).join('')}
+        ${rows.map((it) => `<tr class="is-click ${lit(...(it.art ? [] : ['images']), ...(it.id === 'chest' ? ['goldChest', 'allLinked'] : ['vault', 'legend', 'xp'].includes(it.id) ? ['allLinked'] : []))}${AG.newton.fresh('item:' + it.id) ? ' is-new' : ''}" data-item="${it.id}" tabindex="0">
+          <td><div class="ag-entity">${AG.hasImage(it) ? AG.skin.thumb(it.name, it.sub) : '<span class="thumb thumb--none">no image</span>'}<div><div class="ag-entity__title">${it.name}</div><div class="ag-entity__sub">${it.sub}</div></div></div></td>
+          <td>${it.price}</td>
+          <td>${it.sku ? `<span class="sku">${it.sku}</span>` : '<span class="ag-badge ag-badge--orange-tertiary ag-badge--sm">Not linked</span>'}</td>
+          <td>${s.published ? '<span class="ag-badge ag-badge--green-tertiary ag-badge--sm">Published</span>' : '<span class="ag-badge ag-badge--gray-secondary ag-badge--sm">Draft</span>'}</td>
+          <td>${AG.byNewton(it.id) ? nwMark() : byYou}</td></tr>`).join('')}
+      </tbody></table></div>
+      <span class="ag-hint">Showing ${rows.length} of ${storeUI.filter === 'all' ? 18 : rows.length}.</span>`;
+  }
+
+  /* ---------- sections right after hub generation, before the person changes anything ---------- */
+  // Handoff 6.5–6.6: platform mechanics and guesses about the game economy are created at once
+  // (Newton mark); where there is nothing to generate from, Newton offers 2–3 starts; data pages stay
+  // honestly empty until players come. Since 26.09 (6.10) the page shows only content — everything
+  // Newton says about it (what to fix, ready starts, what's left before data comes) is in the chat.
+  let pageKind = 'list';   // 'empty' — no rows on the page yet: while Newton does a task here, he takes nearly the whole screen
+  const status = () => (AG.state.published ? '<span class="ag-badge ag-badge--green-tertiary ag-badge--sm">Published</span>' : '<span class="ag-badge ag-badge--gray-secondary ag-badge--sm">Draft</span>');
+  const draftSt = () => '<span class="ag-badge ag-badge--gray-secondary ag-badge--sm">Draft</span>';
+  const notLinkedBadge = '<span class="ag-badge ag-badge--orange-tertiary ag-badge--sm">Not linked</span>';
+  /* a row a task in the chat just changed (Gold Chest linked, day 7 upgraded…) lights up with the magic, like a new one */
+  const lit = (...keys) => (keys.some((k) => AG.newton.fresh('apply:' + k)) ? 'is-new' : '');
+  const mark = (row, ...keys) => Object.assign(row, { cls: lit(...keys) });
+  // only Gold Chest is unlinked in the data; once linked from the chat, the badge goes everywhere
+  const nl = () => (AG.state.applied.goldChest ? '' : notLinkedBadge);
+  const ent = (title, sub) => `<div class="ag-entity">${AG.skin.thumb(title, sub)}<div><div class="ag-entity__title">${title}</div><div class="ag-entity__sub">${sub}</div></div></div>`;
+  const two = (title, sub) => `<div><div class="ag-entity__title">${title}</div><div class="ag-entity__sub">${sub}</div></div>`;
+  /* making one by hand, without Newton (brief: the usual controls stay): the same item form, empty; it lands as a draft, without Newton's mark */
+  const ADD = { store: ['Add item', 'New item'], 'store-bundles': ['Add bundle', 'New bundle'], 'store-offers': ['Add offer', 'New offer'] };
+  const addBtn = () => (ADD[route()] ? `<button class="ag-btn ag-btn--primary" data-a="add">${icon('plus')}${ADD[route()][0]}</button>` : '');
+  const head = (title) => `<div class="page__head"><div><h1 class="text-page-title">${title}</h1></div>${addBtn()}</div>`;   // no supporting line under the heading (Daria, 28.09)
+  const byYou = '';   // made by hand: no mark — only Newton's work is marked (Daria, 27.09)
+  const nwMark = () => AG.nwLabel();   // the spark and "Newton" (Daria, 28.09: the spark alone didn't say whose it was)
+  // a row may carry its own status and class (rows Newton just added from the chat: r.st, r.cls)
+  const table = (cols, rows, st = status) => `<div class="table-card"><table class="ag-table"><thead><tr>${cols.map((c) => `<th>${c}</th>`).join('')}</tr></thead><tbody>
+    ${rows.map((r) => `<tr class="${r.cls || ''}">${r.map((c) => `<td>${c}</td>`).join('')}<td>${(r.st || st)()}</td><td>${r.by ? byYou : nwMark()}</td></tr>`).join('')}</tbody></table></div>`;
+  // quiet line under the cards when a section has nothing yet; the big box only if there are no cards either
+  const nothing = (title, text) => `<p class="page-none"><b>${title}.</b> ${text}</p>`;
+  const empty = (title, text) => `<div class="ag-empty"><div><p class="ag-empty__title">${title}</p><p class="ag-empty__text">${text}</p></div></div>`;
+  /* the empty table, drawn as it will be: its columns, four skeleton rows, and the note — how to add, what it keeps */
+  const skel = (cols, title, how, keeps) => `<div class="table-card skel"><table class="ag-table"><thead><tr>${cols.map((c) => `<th>${c}</th>`).join('')}</tr></thead><tbody>
+    ${[0, 1, 2, 3].map((i) => `<tr>${cols.map((c, j) => `<td><div class="ag-skeleton" style="width:${[72, 56, 64, 44][(i + j) % 4]}%"></div></td>`).join('')}</tr>`).join('')}</tbody></table>
+    </div><p class="skel__note"><b>${title}.</b> ${how}</p>`;   // under the table, left, one quiet line (Daria, 28.09: not a sticker over it)
+  // created at once: the table ends with Status and Made by
+  const made = ({ title, lead, cols, rows, extra = '' }) => head(title, lead) + ctaGrid(route()) + extra + table([...cols, 'Status', 'Made by'], rows);
+
+  /* ---------- the event Newton builds in the chat (handoff 6.10): its pieces land in their sections ---------- */
+  const EV = () => AG.newton.event || {};
+  const evStatus = () => (EV().scheduled ? '<span class="ag-badge ag-badge--blue-tertiary ag-badge--sm">Scheduled · Oct 25</span>' : draftSt());
+  const evRow = (cells, key) => Object.assign(cells, { st: evStatus, cls: AG.newton.fresh(key) ? 'is-new' : '' });
+  const hwTag = '<span class="ag-badge ag-badge--orange-tertiary ag-badge--sm">Halloween</span>';
+  const evBundle = () => (EV().bundle ? [evRow([ent(`${EV().bundle.title} ${hwTag}`, EV().bundle.contents), EV().bundle.price], 'bundle')] : []);
+  const evRewards = () => (EV().rewards ? `<div class="ev-title">Halloween · ${AG.newton.DATES}<span>Replaces the regular cycle for 7 days</span></div>`
+    + table(['Day', 'Reward', 'Status', 'Made by'], EV().rewards.days.map((d, i) => evRow([String(i + 1), d], 'rewards')), evStatus)
+    + '<div class="ev-title">Regular cycle</div>' : '');
+  const evPush = () => (EV().push ? [evRow([two(`${EV().push.title} ${hwTag}`, `Push · ${EV().push.who}`), EV().push.when], 'push')] : []);
+
+  /* nothing to generate from: the starts are Newton's card in the chat; a draft made from one lands here */
+  // drafts made from Newton's tasks and starts, newest first, lit up for a moment when just added
+  const draftRows = (r, first = two) => (AG.state.drafts[r] || []).slice().reverse().map((d) => Object.assign([first(d.title, d.sub), ...(d.cols || [d.col])],
+    { st: draftSt, cls: AG.newton.fresh('draft:' + r + ':' + d.title) ? 'is-new' : '', by: d.by }));
+  const starts = ({ title, lead, none, keeps = 'it lands here as a draft.', extra = [] }) => {
+    const r = route(), cols = AG.newton.STARTS[r].cols;
+    const rows = [...extra, ...draftRows(r)];
+    const grid = ctaGrid(r);
+    if (!rows.length) { pageKind = 'empty'; return head(title, lead) + grid + skel([...cols, 'Status', 'Made by'], none, grid ? 'Pick one above or ask Newton.' : 'Ask Newton to make one.'); }
+    return head(title, lead) + grid + table([...cols, 'Status', 'Made by'], rows, draftSt);
+  };
+  /* data pages wait for players: what is left before data comes is Newton's checklist in the chat */
+  const waiting = ({ title, lead, none, text, cols, keeps }) => { const grid = ctaGrid(route()); pageKind = 'empty';
+    return head(title, lead) + grid + (cols ? skel(cols, none, text, keeps) : grid ? nothing(none, text) : empty(none, text)); };
+
+  function transactions() {
+    const ok = '<span class="ag-badge ag-badge--green-tertiary ag-badge--sm">Paid</span>';
+    const failed = '<span class="ag-badge ag-badge--orange-tertiary ag-badge--sm">Failed · card provider</span>';
+    const rows = [['NightRaven', 'Gem Hoard', '$9.99', 'Today, 14:02', ok], ['Kira_07', 'Starter Pack', '$4.99', 'Today, 13:40', ok], ['MadGolem', 'Energy Refill', '$1.99', 'Today, 12:15', ok],
+      ['PixelFox', 'Hero Pack', '$6.99', 'Yesterday, 19:31', ok], ['Luna_R', 'Gem Pack', '$9.99', 'Wed, 20:12', failed], ['Brick99', 'Gem Pack', '$9.99', 'Wed, 18:47', failed],
+      ['Ozzy', 'Starter Pack', '$4.99', 'Wed, 17:05', failed], ['Raider_Max', 'Gold Chest', '$19.99', 'Wed, 11:20', ok]];
+    return head('Transactions', 'Every purchase on your hub.') + `<div class="table-card"><table class="ag-table"><thead><tr><th>Player</th><th>Item</th><th>Amount</th><th>When</th><th>Status</th></tr></thead><tbody>
+      ${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      <span class="ag-hint">Showing the latest 8 · 1,204 paying players this week.</span>`;
+  }
+
+  const SECTIONS = {
+    /* Analytics */
+    'analytics-reports': () => waiting({ title: 'Reports', lead: 'Detailed reports: everything that isn’t in the Home pulse.', none: 'No reports yet', text: 'They start with the first visits.' }),
+    'analytics-transactions': () => (AG.homeState() === 3 ? transactions()
+      : waiting({ title: 'Transactions', lead: 'Every purchase on your hub.', none: 'No purchases yet', text: 'They show up with the first purchase.',
+        cols: ['Player', 'Item', 'Amount', 'When', 'Status'] })),
+    /* Store: guesses about the game economy, created at once */
+    'store-bundles': () => made({ title: 'Bundles', lead: 'Several items sold together for one price.',
+      cols: ['Bundle', 'Price'],
+      rows: [...evBundle(), ...draftRows('store-bundles', ent), [ent('Hero Starter Bundle', '800 gems · 3 hero shards · 100 energy'), '$7.99'], mark([ent('Raider Chest Bundle', '2 Gold Chests · 500 gems ' + nl()), '$24.99'], 'goldChest'), [ent('Energy Week', '7 Energy Refills'), '$9.99']] }),
+    'store-offers': () => made({ title: 'Offers', lead: 'Special deals shown to players on your hub.',
+      cols: ['Offer', 'Price', 'Shown to', 'Limit'],
+      rows: [...draftRows('store-offers', ent), [ent('Starter Pack', '500 gems · 3 hero shards'), '$4.99', 'New players', 'Once per player'], [ent('Gem Hoard', '1,200 gems · 2 hero shards'), '$9.99', 'Everyone', 'No limit'],
+        [ent('Energy Boost', '300 energy'), '$1.99', 'Everyone', 'Once a day'], [ent('Hero Pack', '5 hero shards'), '$6.99', 'Everyone', 'No limit'],
+        [ent('Legendary Deal', '1 legendary hero shard · 500 gems'), '$19.99', 'Everyone', 'Once per player'], mark([ent('Chest Bargain', 'Gold Chest · 200 gems ' + nl()), '$14.99', 'Everyone', 'No limit'], 'goldChest')] }),
+    'store-currencies': () => made({ title: 'Currencies', lead: 'Virtual currencies of your game, found in your App Store description.',
+      cols: ['Currency', 'Linked to', 'Sold in'],
+      rows: [[two('Gems', 'Premium currency'), '<span class="sku">gems</span>', 'Gem Pack, Gem Stack, Gem Vault'], [two('Energy', 'Spent to play'), '<span class="sku">energy</span>', 'Energy Refill']] }),
+    /* Store: nothing to generate from */
+    'store-promotions': () => starts({ title: 'Promotions', lead: 'Discounts and bonuses on your items for a limited time.', none: 'No promotions yet', keeps: 'it lands here as a draft, with when it runs.' }),
+    'store-subscriptions': () => starts({ title: 'Subscriptions', lead: 'Monthly plans that give players something every day.', none: 'No subscriptions yet' }),
+    'store-loot-boxes': () => starts({ title: 'Loot boxes', lead: 'Boxes with random rewards. Odds are shown to players.', none: 'No loot boxes yet' }),
+
+    /* Marketing: nothing to generate from */
+    'marketing-campaigns': () => starts({ title: 'Campaigns', lead: 'Emails, pushes and pop-ups that start on their own when something happens.', none: 'No campaigns yet', keeps: 'it lands here as a draft, with when it starts.',
+      extra: [...evPush()] }),   // the win-back campaign lands here from its card on Home 3 (a draft, like the rest)
+    'marketing-creators': () => starts({ title: 'Creators', lead: 'Streamers and bloggers who bring players to your hub. Program settings live on this page.', none: 'No creators yet' }),
+    'marketing-codes': () => starts({ title: 'Codes', lead: 'Promo codes players enter on the hub for a discount, a bonus or a free item.', none: 'No codes yet', keeps: 'it lands here as a draft, with what it gives.' }),
+
+    /* Engagement: platform mechanics, created at once */
+    'engagement-daily-rewards': () => made({ title: 'Daily rewards', lead: 'A gift for every day a player comes back to the hub.',
+      extra: evRewards(),
+      cols: ['Day', 'Reward'],
+      rows: [['1', '50 gems'], ['2', '100 energy'], ['3', '100 gems'], ['4', '1 hero shard'], ['5', '150 gems'], ['6', '200 energy'], mark(['7', AG.state.applied.day7 ? 'Legendary Shard' : AG.state.applied.day7gems ? '500 gems' : 'Gold Chest ' + nl()], 'day7', 'day7gems', 'goldChest')] }),
+    'engagement-loyalty': () => made({ title: 'Loyalty program', lead: 'Players level up with every purchase on the hub and get rewards. $1 spent = 1 point.',
+      cols: ['Level', 'Points', 'Reward'],
+      rows: [['Bronze', '0', '—'], ['Silver', '20', '200 gems'], ['Gold', '50', '500 gems · 3 hero shards'], ['Platinum', '100', 'Legendary Shard'], ['Diamond', '250', 'Gem Vault']] }),
+    'engagement-leaderboards': () => made({ title: 'Leaderboards', lead: 'Rankings that bring players back to the hub. Which ones the hub shows is set in Hub.',
+      cols: ['Leaderboard', 'Period', 'Top rewards'],
+      rows: [mark(['Most played last 7 days', 'Rolling 7 days', AG.state.applied.top3 ? 'Top 3: a prize · Top 10: 300 gems' : 'Top 10: 300 gems'], 'top3'), ['Most played overall', 'All time', '—']] }),
+    'engagement-achievements': () => made({ title: 'Achievements', lead: 'Goals players reach on the hub. The Achievements page itself is in Hub.',
+      cols: ['Achievement', 'How to get it', 'Reward'],
+      rows: [mark(['First purchase', 'Buy anything on the hub', AG.state.applied.ach1 ? '200 gems' : '50 gems'], 'ach1'), ['Week streak', 'Claim daily rewards 7 days in a row', '100 gems'], ['Loyal raider', 'Reach Silver in the loyalty program', '1 hero shard'],
+        ['Collector', 'Buy 5 different items', '150 gems'], ['Top 10', 'Finish in the top 10 of a weekly leaderboard', '300 gems']] }),
+    /* Engagement: nothing to generate from */
+    'engagement-daily-quiz': () => starts({ title: 'Daily quiz', lead: 'A short question a day with a small reward.', none: 'No quiz yet' }),
+
+    /* Players */
+    'players-segments': () => starts({ title: 'Segments', lead: 'Groups of players for offers and campaigns.', none: 'No segments yet' }),
+    'players-profiles': () => waiting({ title: 'Profiles', lead: 'Every player who logged in to your hub.', none: 'No players yet', text: 'They show up after the first login.' }),
+    'players-attributes': () => waiting({ title: 'Attributes', lead: 'Player data from your game: level, spend, country and so on.', none: 'No attributes yet', text: 'They come from your game once it’s connected.' })
+  };
+
+  /* ---------- Newton panel: one conversation across pages (app/newton.js on the chat engine) ----------
+     Home and pages with content — moderate; an empty page — wide; while an event is built — wide. */
+  const kind = () => (route() === 'home' || (!SECTIONS[route()] && route() !== 'store') ? 'home' : pageKind);
+  // what Newton's messages can do to this page (filters and jumps he offers in the chat)
+  function onPage(k) {
+    if (k === 'f-sku' || k === 'goto-unlinked') { storeUI.filter = 'sku'; if (route() === 'store') render(); else location.hash = 'store'; }
+  }
+
+  /* ---------- render ---------- */
+  function render() {
+    if (AG.navOff(route())) { location.replace('#home'); return; }   // a section the prototype doesn't use (greyed in the menu)
+    const r = route();
+    pageKind = 'list';
+    let html;
+    if (r === 'store') html = store();
+    else if (SECTIONS[r]) html = SECTIONS[r]();
+    else html = [home1, home2, home3][AG.homeState() - 1]();
+    AG.setKeepingPreviews($('#page'), html);   // the hub preview on Home stays loaded between redraws
+    /* what Newton just put here shimmers once (Daria, 26.09): new drafts, the event's pieces, rows a task changed */
+    const f = AG.state.flash;
+    if (f && Date.now() - f.at < 6000) $$('#page tr.is-new').forEach((tr, i) => AG.meltIn(tr, { key: `flash:${f.at}:${i}` }));   // a new row settles out of a ripple (Daria, 28.09: not the dots)
+  }
+  window.addEventListener('hashchange', () => AG.swap(() => { render(); $('.app__main').scrollTop = 0; }, $('#page')));
+  document.addEventListener('ag:change', render);
+
+  $('#page').addEventListener('click', (e) => {
+    const row = e.target.closest('[data-item]');
+    if (row) { AG.newton.task('edit:' + row.dataset.item); return; }   // in the chat, not a side panel (Daria, 27.09; AG.openItem stays, unused)
+    const t = e.target.closest('[data-task]');
+    if (t) { AG.newton.task(t.dataset.task); return; }
+    const a = e.target.closest('[data-a]'); if (!a) return;
+    const k = a.dataset.a, s = AG.state;
+    if (k === 'verify') AG.newton.task('verify');       // steps in the chat with Newton, not a window (Daria, 27.09)
+    else if (k === 'connect') AG.newton.task('connect');
+    else if (k === 'publish') { AG.save({ published: true }); AG.newton.published(); }
+    else if (/^f-(all|img|sku)$/.test(k)) { storeUI.filter = k.slice(2); render(); }   // Items' filters (All / No image / Not linked)
+    else if (k === 'purchase') AG.save({ purchase: true });
+    else if (k === 'add') AG.newton.task('add:' + route());   // in the chat: Newton fills it in, you change it or "Decide for me" (Daria, 27.09)
+    else if (k === 'add-by-hand') {   // the old side form, kept (not deleted) — nothing opens it now
+      const r = route();
+      AG.openItem({ id: 'new', title: ADD[r][1], name: '', price: '', sub: '', sku: '', onSave: (v) => {
+        const d = { title: v.name, sub: v.sub, by: 'you', sku: v.sku, cols: r === 'store-offers' ? [v.price, 'Everyone', 'No limit'] : [v.price] };
+        AG.save({ drafts: Object.assign({}, s.drafts, { [r]: [...(s.drafts[r] || []), d] }), flash: { key: 'draft:' + r + ':' + d.title, at: Date.now() } });
+        AG.toast('Added as a draft');
+      } });
+    }
+  });
+  $('#page').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const row = e.target.closest('[data-item]'); if (row) { e.preventDefault(); AG.newton.task('edit:' + row.dataset.item); return; }
+    const t = e.target.matches('article[data-task]') && e.target; if (t) { e.preventDefault(); AG.newton.task(t.dataset.task); }
+  });
+  render();
+  AG.newton.mount({ page: 'dashboard', route, kind, onPage });
+})();
+</script>
+<div class="release-narrow" role="note"><div><b>Open on a computer</b><span>This prototype is made for screens 1280px and wider.</span></div></div>
+<style>.release-narrow{display:none}@media (max-width:1023px){.release-narrow{display:grid;position:fixed;inset:0;z-index:2147483000;place-items:center;padding:24px;background:var(--color-bg-secondary,#f1f5f9);text-align:center}.release-narrow>div{display:flex;flex-direction:column;gap:8px;max-width:320px}.release-narrow b{font:600 22px/28px var(--font-sans,system-ui);color:var(--color-text-primary,#000)}.release-narrow span{font:400 14px/20px var(--font-sans,system-ui);color:var(--color-text-secondary,#475569)}}</style>
+</body>
+</html>

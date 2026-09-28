@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Aghanim · AI-first dashboard prototype">
+<meta property="og:description" content="Newton, the AI in the dashboard: onboarding, Home, a Halloween event built in the chat, the hub builder. Best on a computer, 1280px and wider.">
+<meta property="og:url" content="https://daria-km.github.io/aghanim-prototype/prototype/Onboarding.html">
+<meta property="og:image" content="https://daria-km.github.io/aghanim-prototype/preview.png">
+<meta property="og:image:width" content="1440">
+<meta property="og:image:height" content="756">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Newton, the AI in the dashboard: onboarding, Home, a Halloween event built in the chat, the hub builder. Best on a computer, 1280px and wider.">
+<script>(function(){try{var v='78fca03',k="aghanim-proto-build",had=localStorage.getItem("aghanim-proto-v1")||localStorage.getItem("aghanim-proto-chat");if(localStorage.getItem(k)!==v){localStorage.removeItem("aghanim-proto-v1");localStorage.removeItem("aghanim-proto-chat");localStorage.setItem(k,v);if(had&&!/Onboarding\.html/.test(location.pathname))location.replace("Onboarding.html#start");}}catch(e){}})();</script>
+
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aghanim · Onboarding</title>
+<link rel="stylesheet" href="../aghanim-ui/tokens.css?v=78fca03">
+<link rel="stylesheet" href="../aghanim-ui/components.css?v=78fca03">
+<link rel="stylesheet" href="app/app.css?v=78fca03">
+<link rel="stylesheet" href="app/chat.css?v=78fca03">
+<link rel="stylesheet" href="app/dark-primary.css?v=78fca03"><!-- trying dark primary buttons (Daria, 27.09); remove this line to go back to blue -->
+<!-- Unbounded is the game's own font: used only inside the hub previews -->
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&display=swap" rel="stylesheet">
+</head>
+<body class="ob-body">
+
+<div class="app app--fixed">
+  <div class="app__body">
+    <main class="app__main ob-main" id="ob-main"></main>
+    <aside class="app__chat" id="nw-chat" aria-label="Newton"></aside>
+  </div>
+</div>
+
+<script src="app/app.js?v=78fca03"></script>
+<script src="app/chat.js?v=78fca03"></script>
+<script>
+(() => {
+  const { $, $$, icon, nwIcon, mountChat } = AG;
+
+  const GAME = { name: 'Pixel Raiders', studio: 'Raider Games Ltd.', link: 'https://apps.apple.com/app/pixel-raiders/id6450012345' };
+
+  /* ---------- what Newton builds (no "Events": he doesn't invent things happening in the game, handoff 6.6) ----------
+     The build as a list that fills in (Daria, 27.09): each part appears when Newton starts it, and its number grows
+     while he makes it — pages 1, 2, 3… 7. [label, how many, what the number counts]; the numbers match the Dashboard
+     (handoff 6.6.1). The theme has no number: it's the look. */
+  const BUILD = [['Themes', 1], ['Pages', 7], ['Store items', 18], ['Offers', 6], ['Bundles', 3], ['News posts', 4],
+    ['Daily gifts', 7], ['Loyalty levels', 5], ['Leaderboards', 2], ['Achievements', 5], ['Wiki pages', 6]];
+
+  /* ---------- style tags ----------
+     The facts come from the store page; the look is the one thing Newton has to guess.
+     Instead of a genre picker or a prompt box he shows how he read the game and lets one tap
+     change his mind. Each style keeps its own colour so a pick reads at a glance. */
+  /* one set with Hub → Styles (app.js): what's picked here is what the hub is built in */
+  const { picked: PICKED, near: NEAR, far: FAR, color: TAG_COLOR } = AG.STYLE_TAGS;
+
+  const ui = {
+    link: GAME.link,             // already pasted, not sent (Daria, 27.09): the viewer just presses the button
+    stage: 'empty',
+    finding: null,               // the running look-up — "not my game" stops it; stages: empty → finding → found → styles
+    seen: new Set(),             // what already came in — a redraw doesn't play its entrance again
+    tags: new Set(PICKED),       // what will be used for the look
+    fromNewton: new Set(PICKED), // which of them Newton picked himself
+    built: 0,                    // parts ready
+    filled: false,               // Newton has auto-filled what he can
+    timer: null
+  };
+  const route = () => (['gen', 'done', 'hub'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'start');
+
+  /* ================= left pane (the dashboard side of the split) ================= */
+  /* the build (Daria, 27.09 — it was a jumpy % ring and a list of spinners, then a grid of numbers — "a calculator"):
+     the hub itself shows up under a pink-blue line sweeping down, and under it the list of what Newton makes. A part
+     comes in when he starts it, its number grows while he works on it, a check when it's done. "Ready" happens in place. */
+  /* the list is there from the start, quiet (Daria, 27.09): a row comes alive when Newton gets to it, counts up while he
+     works, then it's done; a dotted path joins the steps, the part already walked turns solid */
+  const rowHTML = ([label, n, unit], i, state) => `<div class="ob-row is-${state}" data-i="${i}">
+      <span class="ob-row__st"><span class="ob-row__spin"></span>${icon('tick')}</span><span class="ob-row__l">${label}</span>
+      <span class="ob-row__n">${state === 'done' ? n : ''}</span></div>`;
+  function buildHTML() {
+    /* the heading with "See my hub" right beside it, a line of air above the preview; the list sits on the preview's middle
+       (Daria, 27.09 — the button over the list and the list on the preview's top edge didn't line up) */
+    return `<div class="ob-build"><div class="ob-build__group">
+      <div class="ob-build__head"><h1 class="ob-build__title"><span class="ob-build__t1">Building your hub</span><span class="ob-build__t2">Your hub is ready</span></h1>
+      <button class="ag-btn ag-btn--primary ag-btn--xl ob-go ob-build__go" data-a="show-hub" tabindex="-1">See my hub</button></div>
+      <div class="ob-browser">
+        <div class="ob-browser__bar"><span class="ob-browser__dots"><i></i><i></i><i></i></span><span class="ob-browser__url">pixelraiders.aghanim.store</span></div>
+        <div class="ob-build__shot"><div class="hubmini">${AG.hubPreview('desktop')}</div><div class="ob-build__veil"></div></div>
+      </div>
+      <div class="ob-list">${BUILD.map((b, i) => rowHTML(b, i, 'wait')).join('')}</div>
+    </div>
+      <button class="ob-restart" data-a="restart">${icon('refresh')}Restart</button>
+    </div>`;
+  }
+  /* where the build is, drawn still (a reload, "ready"): the parts done so far, the veil, the heading */
+  function updateBuild() {
+    const box = $('.ob-build'); if (!box) return;
+    const done = ui.built >= BUILD.length, list = $('.ob-list', box);
+    box.classList.toggle('is-done', done);
+    const go = $('.ob-build__go', box); if (go) go.tabIndex = done ? 0 : -1;
+    box.style.setProperty('--p', (ui.built / BUILD.length).toFixed(3));
+    $$('.ob-row', list).forEach((row, i) => { if (i < ui.built && !row.classList.contains('is-done')) row.outerHTML = rowHTML(BUILD[i], i, 'done'); });   // catch up (a reload); a part being made stays
+  }
+  /* one part: its row comes in, its number counts up one by one while it's made, then the check */
+  function makePart(i, then) {
+    const box = $('.ob-build'), list = box && $('.ob-list', box); if (!list) return;
+    const row = list.children[i]; row.classList.replace('is-wait', 'is-run');
+    const num = $('.ob-row__n', row), n = BUILD[i][1];
+    row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    /* one number at a time — 1, 2, 3… — a small parts count slower, a big one faster; the theme just takes a moment */
+    const step = n ? Math.max(35, Math.min(95, 650 / n)) : 500;   // quicker (Daria, 28.09): the whole build in about 8 s
+    let k = 0;
+    const tick = () => {
+      if (!row.isConnected) return;
+      if (n && k < n) { k++; num.textContent = k; setTimeout(tick, step); return; }
+      if (!n && k++ === 0) { setTimeout(tick, step); return; }
+      row.classList.replace('is-run', 'is-done');
+      ui.built = i + 1; box.style.setProperty('--p', (ui.built / BUILD.length).toFixed(3));
+      setTimeout(then, 130);
+    };
+    setTimeout(tick, 150);
+  }
+  function mainHTML(r) { return r === 'start' ? '' : buildHTML(); }
+
+  /* ================= "See my hub": the hub over the screen (Daria, 27.09) =================
+     Not a separate screen: a big browser window over the blurred split, the real hub inside — the whole home page,
+     scroll it, look, nothing to click. It scrolls a little by itself at first, so it reads as a site, not a picture.
+     One way on, to setting it up and launching. The browser's Back closes it (it's #hub). */
+  function openShow() {
+    AG.showHub({ closeAttr: 'data-a="show-close"', scroll: 220,
+      foot: `<button class="ag-btn ag-btn--primary ag-btn--xl ob-go" data-a="launch">Let’s make it live</button>` });
+  }
+  const closeShow = () => AG.closeHub();
+
+  /* ================= Newton's side, the first screen ================= */
+  /* The heading follows what you do, like in agents (Daria, 27.09): a greeting only while nothing has happened; after the
+     link goes out it names the job, and the line under it says what Newton is doing right now. */
+  const HEAD = {
+    empty: ['Hello, Alex!', 'Just drop your game’s link — I’ll do the rest.'],
+    finding: ['Looking for your game', 'Checking the App Store…'],
+    found: [`Found ${GAME.name}`, 'Reading your icon and screenshots…'],
+    styles: [`Found ${GAME.name}`, 'I’ve picked a few styles. Add or remove any.']
+  };
+  const hello = () => {
+    const [h, p] = HEAD[ui.stage], busy = ui.stage === 'finding' || ui.stage === 'found';
+    return `<div class="nw-turn"><div class="ob-hello">
+      <span class="ag-badge ag-badge--pink-tertiary ag-badge--sm">${nwIcon()}Newton</span>
+      <h1 class="text-title-t2${fresh('h:' + h)}" data-k="h:${h}">${h}</h1>
+      <p class="text-paragraph-md ob-hello__p${busy ? ' is-busy' : ''}${fresh('p:' + ui.stage)}" data-k="p:${ui.stage}">${busy ? '<span class="ag-spinner"></span>' : ''}<span>${p}</span></p>
+    </div></div>`;
+  };
+
+  /* the same tags as Hub → Styles: a picked one carries a check, so "on" reads at a glance (Daria, 27.09) */
+  const tagCls = (t) => `tag tag--${TAG_COLOR[t] || 'gray'}${ui.tags.has(t) ? ' is-on' : ''}`;
+  const tagBtn = (t, i = -1) => `<button class="${tagCls(t)}${i > -1 ? ' ob-pop' : ''}" data-tag="${t}" aria-pressed="${ui.tags.has(t)}"${i > -1 ? ` style="--i:${i}"` : ''}>${t}</button>`;
+
+  /* found: a green "Found" with a check, and a bin — not the right game? start over */
+  const foundCard = () => `<div class="ob-found">
+    <span class="game-ico game-ico--lg"></span>
+    <span class="ob-found__txt"><b>${GAME.name}</b><span>${GAME.studio} · App Store</span></span>
+    <span class="ag-badge ag-badge--green-tertiary ag-badge--sm ob-found__ok">${icon('tick')}Found</span>
+    <button class="ob-found__x" data-a="unfind" aria-label="Not my game — start over" title="Not my game — start over">${icon('trash')}</button>
+  </div>`;
+
+  /* The first screen, as a process: the link (already in, not sent) → the look-up → the game, found, with a bit of magic →
+     Newton reads the look → his picks come in one by one, all the other styles with them → Build my hub.
+     Each part plays its entrance once (ui.seen); tapping a tag later doesn't replay anything. */
+  const fresh = (k) => (ui.seen.has(k) ? '' : ' ob-in');
+  function startTurn() {
+    const st = ui.stage, set = st !== 'empty';
+    let html = `<form class="ob-link${set ? ' is-set' : ui.typed && ui.link ? ' has-text' : ''}" data-ask-link>
+        <label class="sr-only" for="obLink">Link to your game</label>
+        <input id="obLink" value="${set || ui.typed ? ui.link : ''}" placeholder="App Store or Google Play link" autocomplete="off"${set ? ' readonly' : ''}>
+        ${set ? '' : `<button class="ob-link__go" aria-label="Find my game">${icon('send')}</button>`}
+      </form>`;
+    if (st === 'found' || st === 'styles') html += `<div class="ob-found-wrap${fresh('found')}" data-k="found">${foundCard()}</div>`;
+    if (st === 'styles') {
+      const others = NEAR.concat(FAR).filter((t) => !PICKED.includes(t)), pop = !ui.seen.has('look');
+      html += `<section class="ob-look${fresh('look')}" data-k="look"><h2 class="text-title-t5">Styles for your hub</h2>
+        <div class="tagcloud">${PICKED.map((t, i) => tagBtn(t, pop ? i : -1)).join('')}${others.map((t) => tagBtn(t)).join('')}</div></section>`;
+    }
+    return `<div class="nw-turn ob-start">${html}</div>`;
+  }
+
+  /* ================= Newton's side after the split: the chat engine, as everywhere after onboarding =================
+     Your message, then Newton; verification one group at a time (a form block; sent — it goes quiet and stays);
+     the examples inside the input change; the hub being ready is Newton telling you — the left side only shows the work,
+     the right side is where you act (Daria, 27.09). */
+  const VSTEPS = AG.VSTEPS;   // the same four steps as on Dashboard (app.js)
+  const stepMsg = (i, done) => ({ from: 'newton', tools: false, text: VSTEPS[i].lead,
+    widget: { type: 'fields', flow: 'verify', n: i, title: VSTEPS[i].title, step: `${i + 1} of 4`, cta: VSTEPS[i].cta, hint: 'Saved as you go.', done: !!done, editable: true,
+      fields: VSTEPS[i].fields().map((f) => (done && !f.value && f.sample ? Object.assign({}, f, { value: f.sample }) : f)) } });
+  /* the hub is ready: the big "See my hub" is next to the preview (Daria, 27.09); here Newton just says so */
+  const READY = () => ({ from: 'newton', tools: false, ready: true,
+    text: `**Your hub is ready** — have a look on the left.${AG.state.verify.status === 'draft' ? ' Verification is saved; finish it from the dashboard.' : ''}` });
+  /* the offer keeps its answer over a reload (QA 28.09): "I'll just watch" stays answered; once the hub is ready and verification
+     wasn't started, it's a quiet line — no new steps here, it waits on the dashboard */
+  const introMsg = (done, watch, built) => Object.assign(introBase(done || watch || built), watch && !done ? { widget: Object.assign(introBase(true).widget, { done: true, note: 'Sure. I’ll tell you the moment your hub is ready.' }) }
+    : built && !done ? { widget: Object.assign(introBase(true).widget, { done: true, note: 'Verification waits for you on the dashboard.' }) } : {});
+  const introBase = (done) => ({ from: 'newton', tools: false, intro: true, stream: !done,
+    text: 'I’m building your hub — it takes a few minutes.\n\nMeanwhile, you could **start verifying your company**: it’s usually the slowest part of launching.',
+    widget: { type: 'offer', flow: 'verify-start', title: 'Verify your company', text: 'Four short steps. I’ll fill in what I can.', cta: 'Start verification', quiet: true, alt: 'I’ll just watch', altNote: 'Sure. I’ll tell you the moment your hub is ready.', done: !!done } });
+  const reviewMsg = () => ({ from: 'newton', tools: false, text: 'Sent for review. I’ll tell you the moment it’s back.' });
+  /* the conversation as it stands (a reload mid-flow draws it again from the saved state) */
+  function script() {
+    const v = AG.state.verify, sent = v.status === 'review' || v.status === 'approved';
+    const started = v.status !== 'none';
+    const msgs = [introMsg(started, !!AG.state.obWatch, ui.built >= BUILD.length)];   // no "Build my hub" from you on top (Daria, 27.09)
+    if (started) msgs.push({ from: 'you', text: 'Start verification' });
+    else if (AG.state.obWatch) msgs.push({ from: 'you', text: 'I’ll just watch' });
+    if (started) {
+      const open = sent ? 4 : Math.min(3, v.step || 0), built = ui.built >= BUILD.length;
+      for (let i = 0; i < open; i++) msgs.push(stepMsg(i, true));
+      if (!sent && !(built && open > 0)) msgs.push(stepMsg(open, false));   // the hub is ready: no new steps here (Daria, 27.09)
+      else if (sent) { msgs.push(reviewMsg()); if (v.status === 'approved') msgs.push({ from: 'newton', tools: false, text: 'Verified. You can publish and take payments.' }); }
+    }
+    if (ui.built >= BUILD.length) msgs.push(READY());
+    return msgs;
+  }
+  const ANSWERS = [
+    { match: ['why do you need', 'why verify'], reply: { tools: false, text: 'Payments go to a verified company only. Everything else works without it — you can build and change the hub right away.' } },
+    { match: ['skip'], reply: { tools: false, text: 'Nothing breaks: you keep building. You just can’t publish or take payments until it’s done.' } },
+    { match: ['how long'], reply: { tools: false, text: 'It takes a while, and it’s the slowest part of launching — so it’s best to send it now, while the hub builds.' } }
+  ];
+  const HINTS = ['Why do you need my company details?', 'What if I skip verification?', 'Can I change the look later?'];
+  let chat = null;
+  function railText() {
+    const v = AG.state.verify.status;
+    return v === 'approved' ? 'Verified' : v === 'review' ? 'Verification in review' : `Verification · step ${Math.min(4, (AG.state.verify.step || 0) + 1)} of 4`;
+  }
+  function openChat(r) {
+    const state = 'moderate', extra = { rail: railText(), back: 'moderate' };   // the usual width: the build is what you watch (Daria, 27.09)
+    if (chat) { chat.width(state, extra); return; }
+    /* a fresh start: Newton's first words arrive and type themselves in; otherwise the conversation is drawn as it stands */
+    const msgs = script(), fresh = AG.state.verify.status === 'none' && ui.built < BUILD.length && msgs.length === 1;
+    chat = AG.chat.mount($('#nw-chat'), Object.assign({ state, messages: fresh ? [] : msgs, answers: ANSWERS, hints: HINTS, fallback: { tools: false, text: 'That answer isn’t in the prototype yet.' },
+      onAction }, extra));
+    if (fresh) chat.say(introMsg(false), 900);
+  }
+  function onAction(act, { chat: c, msg, data }) {
+    if (act === 'submit' && data.flow === 'verify') {
+      data.fields.forEach((f) => { if (!f.value && f.sample) f.value = f.sample; });
+      if (data.redo) { c.widget(msg.id, { done: true, redo: false }); return; }   // a passed step changed: that's all
+      c.widget(msg.id, { done: true });
+      const n = data.n + 1;
+      /* the verification is for the wait while the hub builds (Daria, 27.09): once it's ready, the rest waits on the dashboard */
+      if (n < VSTEPS.length && ui.built >= BUILD.length) { AG.save({ verify: { step: n, status: 'draft' } }); c.say({ tools: false, text: 'Saved. The rest waits for you on the dashboard — no rush.' }, 500); return; }
+      if (n < VSTEPS.length) { AG.save({ verify: { step: n, status: 'draft' } }); c.say(stepMsg(n), 500); }
+      else { AG.save({ verify: { step: AG.VERIFY_TOTAL, status: 'review' } }); c.say(reviewMsg(), 500); AG.toast('Sent for review'); }
+      return;
+    }
+    if (act === 'approve') { AG.save({ verify: { step: AG.VERIFY_TOTAL, status: 'approved' } }); c.update(msg.id, { actions: [] }); c.say({ tools: false, text: 'Verified. You can publish and take payments.' }, 500); return; }
+    if (act === 'offer' && data.flow === 'ready') location.hash = 'hub';
+    if (act === 'offer-no' && data.flow === 'verify-start') { AG.save({ obWatch: true }); c.push({ from: 'you', text: 'I’ll just watch' }); }
+    if (act === 'offer' && data.flow === 'verify-start') {
+      c.push({ from: 'you', text: 'Start verification' });   // your answer, on the right (UX answers 28.09)
+      AG.save({ verify: { step: 0, status: 'draft' } }); c.say(stepMsg(0), 500); }
+  }
+  /* verification starts only if you say so now (Daria, 27.09): Newton offers it, you may just watch */
+  function autofill() {}
+  /* the hub is ready: Newton says so on the right, where you act; the left just shows it done */
+  function hubReady() {
+    if (!chat) return;
+    /* the offer isn't left open once the hub is ready (verification not started): no new steps here */
+    const intro = chat.messages.find((m) => m.intro && m.widget && !m.widget.done);
+    if (intro && AG.state.verify.status === 'none') chat.update(intro.id, { widget: Object.assign(intro.widget, { done: true, note: 'Verification waits for you on the dashboard.' }) });
+    if (!chat.messages.some((m) => m.ready)) chat.say(READY(), 600);
+  }
+
+  /* ================= render ================= */
+  function render() {
+    const r = route(), main = $('#ob-main');
+    if (r !== 'start' && $('.ob-build', main)) updateBuild();   // the same screen goes on: no redraw
+    else { main.innerHTML = mainHTML(r); if (r !== 'start') { if (r !== 'gen') ui.built = BUILD.length; updateBuild(); } }
+    if (r === 'hub') openShow(); else closeShow();
+    if (r === 'start') {
+      chat = null;
+      mountChat($('#nw-chat'), { state: 'solo', body: `<div class="nw-col ob-col">${hello()}${startTurn()}
+        ${ui.stage === 'styles' ? `<div class="ob-cta${fresh('cta')}" data-k="cta"><button class="ag-btn ag-btn--primary ag-btn--xl ob-go" data-a="build">Show me the magic${icon('spark')}</button></div>` : ''}</div>` });
+      const found = $('.ob-found-wrap.ob-in'); if (found) AG.magic(found.firstElementChild);   // the game, found: a touch of magic
+      centre();
+      if (ui.stage === 'empty' && !ui.typed) typeLink();
+      $$('.ob-in[data-k]').forEach((e) => ui.seen.add(e.dataset.k));
+    } else openChat(r);
+  }
+  /* the column sits in the middle of the screen; when it grows it rises smoothly, from where it was to the new middle */
+  function centre() {
+    const body = $('.nw-chat__body'), col = $('.ob-col'); if (!body || !col) return;
+    col.style.transition = 'none';
+    col.style.paddingTop = '0px';
+    const target = Math.max(40, Math.round((body.clientHeight - col.scrollHeight) / 2));
+    col.style.paddingTop = `${ui.top != null ? ui.top : target}px`;
+    void col.offsetHeight; col.style.transition = '';
+    col.style.paddingTop = `${target}px`; ui.top = target;
+  }
+  window.addEventListener('resize', () => { if (route() === 'start') centre(); });
+  /* the link types itself into the field, as if pasted just now — then the button is there to press */
+  function typeLink() {
+    const i = $('#obLink'), form = i && i.closest('.ob-link'); if (!i) return;
+    const run = ui.typing = {};
+    setTimeout(() => {
+      if (ui.typing !== run || !i.isConnected) return;
+      i.value = ui.link; form.classList.add('has-text', 'is-pasting');   // the link comes in with a quick wipe (app.css)
+      ui.typed = true;
+    }, 450);
+  }
+  /* the store look-up and Newton reading the look take a moment each — the process shows, it isn't a filled-in form */
+  function find(link) {
+    if (ui.typing && !ui.typed) { ui.typing = null; ui.typed = true; link = ui.link; }   // pressed before the link showed: the whole link
+    if (!link || ui.stage !== 'empty') return;
+    const run = ui.finding = {};
+    ui.link = link; ui.stage = 'finding'; render();
+    setTimeout(() => { if (ui.finding === run) { ui.stage = 'found'; render(); } }, 2200);
+    setTimeout(() => { if (ui.finding === run) { ui.stage = 'styles'; render(); } }, 4200);
+  }
+  /* not the right game: back to the start, quietly — the link as it was, Newton's picks as they were */
+  function unfind() {
+    ui.finding = null; ui.stage = 'empty'; ui.link = GAME.link; ui.seen.clear(); ui.typed = false; ui.top = null;
+    ui.tags = new Set(PICKED); ui.fromNewton = new Set(PICKED);
+    render();
+    const i = $('#obLink'); if (i) i.focus();
+  }
+
+  /* generation runs on its own; Newton keeps working on the right while it does */
+  function startGen() {
+    const run = ui.timer = {};   // a newer run stops this one
+    const next = () => {
+      if (ui.timer !== run || route() !== 'gen') return;
+      if (ui.built >= BUILD.length) { hubReady(); setTimeout(() => { if (ui.timer === run) location.hash = 'done'; }, 600); return; }
+      makePart(ui.built, next);
+    };
+    setTimeout(next, 500);
+  }
+
+  window.addEventListener('hashchange', () => {
+    const r = route();
+    if (r === 'gen') { ui.built = 0; startGen(); } else ui.timer = null;
+    render();
+    if (r !== 'start') autofill();
+  });
+
+  /* ---------- clicks ---------- */
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-tag]');
+    if (t) {
+      const k = t.dataset.tag;
+      if (ui.tags.has(k)) ui.tags.delete(k); else ui.tags.add(k);
+      render();
+      return;
+    }
+    const a = e.target.closest('[data-a]'); if (!a) return;
+    const k = a.dataset.a;
+    if (k === 'build') build();
+    else if (k === 'unfind') unfind();
+    else if (k === 'show-close') history.back();
+    else if (k === 'show-hub') location.hash = 'hub';
+    else if (k === 'launch') AG.go('Dashboard.html#home');
+    else if (k === 'restart') { AG.reset(); location.hash = 'start'; location.reload(); }   // the prototype from the first screen
+  });
+
+  /* one move, not two: Newton goes straight from the whole screen to two thirds and the dashboard
+     slides in on the left while he does it */
+  function build() {
+    AG.reset(); ui.filled = false; ui.built = 0;
+    AG.save({ style: { tags: [...ui.tags], newton: [...ui.fromNewton] } });   // Hub builds the look from these (and keeps them in Styles)
+    location.hash = 'gen';
+  }
+
+  document.addEventListener('submit', (e) => {
+    if (e.target.matches('[data-ask-link]')) { e.preventDefault(); find($('#obLink').value.trim()); }
+  });
+  /* a pasted link starts the look-up by itself */
+  document.addEventListener('paste', (e) => {
+    if (e.target.id !== 'obLink') return;
+    setTimeout(() => find(e.target.value.trim()), 60);
+  });
+  document.addEventListener('input', (e) => { if (e.target.id === 'obLink') e.target.closest('.ob-link').classList.toggle('has-text', !!e.target.value.trim()); });
+
+  if (route() !== 'start') { ui.link = GAME.link; ui.stage = 'styles'; }   // came back mid-flow: the game is already found
+  if (route() === 'done' || route() === 'hub') ui.built = BUILD.length;
+  if (route() === 'gen') startGen();
+  render();
+  if (route() !== 'start') autofill();
+})();
+</script>
+<div class="release-narrow" role="note"><div><b>Open on a computer</b><span>This prototype is made for screens 1280px and wider.</span></div></div>
+<style>.release-narrow{display:none}@media (max-width:1023px){.release-narrow{display:grid;position:fixed;inset:0;z-index:2147483000;place-items:center;padding:24px;background:var(--color-bg-secondary,#f1f5f9);text-align:center}.release-narrow>div{display:flex;flex-direction:column;gap:8px;max-width:320px}.release-narrow b{font:600 22px/28px var(--font-sans,system-ui);color:var(--color-text-primary,#000)}.release-narrow span{font:400 14px/20px var(--font-sans,system-ui);color:var(--color-text-secondary,#475569)}}</style>
+</body>
+</html>
