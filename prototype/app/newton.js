@@ -250,7 +250,9 @@ AG.newton = (() => {
     const lines = [], actions = [];
     if (launchIds.length) lines.push(`**To go live:** ${words(launchIds)}.`);
     if (otherIds.length) lines.push(`**To bring in more players and sales:** ${words(otherIds)}.`);
-    if (launchIds.length && otherIds.length) actions.push(goAct('Do the launch steps for me', launchIds));
+    /* one launch thing left (Publish, once verify and connect are through) — the button names it, not "the launch steps"
+       (Daria, 29.09: it read as if the steps she had done didn't count) */
+    if (launchIds.length && otherIds.length) actions.push(goAct(launchIds.length > 1 ? 'Do the launch steps for me' : capital(askOf(launchIds[0])), launchIds));
     if (ids.length) actions.push(goAct('Decide everything for me', [...launchIds, ...otherIds]));
     const next = actions.length ? { sid: `hi:home:${st}:b:${Date.now()}`, summary: true, text: lines.join('\n\n'), actions } : null;
     return [happened, next].filter(Boolean);   // nothing to suggest: no empty heading
@@ -312,7 +314,8 @@ AG.newton = (() => {
   function doAll(ids, label) {
     ids = ids.filter(Boolean);
     const names = ids.map(askOf), steps = names.map(capital), acts = [];
-    chat.push({ from: 'you', text: `${label || 'Decide everything for me'}: ${names.join(', ')}` });   // echoes the button actually pressed — "Get me live" reads differently from "Decide everything for me" (Daria, 28.09)
+    const said = names.length === 1 && label && label.toLowerCase() === names[0].toLowerCase() ? label : `${label || 'Decide everything for me'}: ${names.join(', ')}`;   // "Publish my hub", not "Publish my hub: publish my hub"
+    chat.push({ from: 'you', text: said });   // echoes the button actually pressed — "Get me live" reads differently from "Decide everything for me" (Daria, 28.09)
     chat.say({ tools: false, widget: { type: 'working', ai: true, kicker: 'Deciding for you', title: ids.length > 1 ? `${ids.length} things, one after another` : steps[0], steps: steps.slice(), at: 0, pct: 0 } }, 600).then((plan) => {
       /* only the job's own blocks count (Daria, 28.09: two minutes per line) — an unfinished task you left in this chat earlier
          is still open, and waiting for it held every job up to the 60 s cap */
@@ -1522,7 +1525,7 @@ AG.newton = (() => {
       state: width(), rail: rail(), back: 'moderate',
       messages: (store.threads[showing] || {}).messages || [], seq: Math.max(0, ...all.map((m) => Number(m.id) || 0)),
       answers: ANSWERS, fallback: FALLBACK, wired: (q) => wired(q),
-      onChange: (list) => { store.threads[showing] = { messages: list, at: ctxKey() }; saveStore(); setTimeout(() => { if (chat) { syncWork(); sync(); syncSugg(); } }, 0); },
+      onChange: (list) => { store.threads[showing] = { messages: list, at: ctxKey() }; saveStore(); setTimeout(() => { if (chat) { syncWork(); sync(); syncSugg(); syncSummary(); } }, 0); },   // a task that opens or closes changes what the summary may offer (QA 29.09: login from the game offered while under way)
       onPin, onPinClose,
       hero: { title: () => heroLine },   // like Sidekick, Fin, ChatGPT: one short line; the ready asks below do the rest — a different one on each visit
       hints: () => hintsHere(),             // the empty input shows this page's examples, one after another
