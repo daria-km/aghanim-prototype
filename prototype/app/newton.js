@@ -255,8 +255,7 @@ AG.newton = (() => {
     const next = actions.length ? { sid: `hi:home:${st}:b:${Date.now()}`, summary: true, text: lines.join('\n\n'), actions } : null;
     return [happened, next].filter(Boolean);   // nothing to suggest: no empty heading
   }
-  function greeting() {
-    const r = opts.route();
+  function greeting(r = opts.route()) {
     let ids = (r === 'analytics-transactions' && AG.homeState() === 3 ? [] : cards(r).map((c) => c.id)).filter((id) => NOTE[id] && !(id === 'l-verify' && inReview()));   // Transactions with purchases shows no cards
     const going = new Set(allOpen().map((t) => t.taskId));   // under way already (the event you've started): not offered again
     ids = ids.filter((id) => !going.has(ALIAS[id] || id));   // no cap (Daria, 28.09): every card on the page gets covered, not just the first two
@@ -315,7 +314,9 @@ AG.newton = (() => {
     const names = ids.map(askOf), steps = names.map(capital), acts = [];
     chat.push({ from: 'you', text: `${label || 'Decide everything for me'}: ${names.join(', ')}` });   // echoes the button actually pressed — "Get me live" reads differently from "Decide everything for me" (Daria, 28.09)
     chat.say({ tools: false, widget: { type: 'working', ai: true, kicker: 'Deciding for you', title: ids.length > 1 ? `${ids.length} things, one after another` : steps[0], steps: steps.slice(), at: 0, pct: 0 } }, 600).then((plan) => {
-      const busy = () => chat.messages.some((m) => m.id !== plan.id && m.widget && !m.widget.done && ['working', 'options', 'fields'].includes(m.widget.type));
+      /* only the job's own blocks count (Daria, 28.09: two minutes per line) — an unfinished task you left in this chat earlier
+         is still open, and waiting for it held every job up to the 60 s cap */
+      const busy = (since) => chat.messages.some((m) => m.id !== plan.id && !since.has(m.id) && m.widget && !m.widget.done && ['working', 'options', 'fields'].includes(m.widget.type));
       const mine = new Set();
       const here = new Set(cards(opts.route()).map((c) => c.id));
       const me = planning = { plan, steps, i: 0, before: new Set(chat.messages.map((m) => m.id)), stopped: false, inner: false, queue: [],
@@ -330,10 +331,10 @@ AG.newton = (() => {
         me.inner = true; doForMe(ids[i]); me.inner = false;   // the plan's own job, not you taking over
         const settle = () => {
           if (me.stopped) return;
-          if (Date.now() - t0 < 60000 && (busy() || Date.now() - t0 < PACE.planMin)) return setTimeout(settle, 200);
+          if (Date.now() - t0 < 60000 && (busy(before) || Date.now() - t0 < PACE.planMin)) return setTimeout(settle, 200);
           setTimeout(() => {   // what a job says after its last step (a result line, the event's card) lands muffled too
             if (me.stopped) return;
-            if (busy() && Date.now() - t0 < 60000) return setTimeout(settle, 200);   // muffle stays on until the whole plan is done (a job's last word may still be on its way); stopPlan lifts it if you take over
+            if (busy(before) && Date.now() - t0 < 60000) return setTimeout(settle, 200);   // muffle stays on until the whole plan is done (a job's last word may still be on its way); stopPlan lifts it if you take over
             chat.messages.forEach((m) => { if (!before.has(m.id)) mine.add(m.id); });
             const res = resultOf(b); if (res.act && !acts.some((a) => a.act === res.act.act)) acts.push(res.act);
             steps[i] = `${steps[i]} — ${res.text}`;
@@ -381,11 +382,14 @@ AG.newton = (() => {
      here, on a card, in another tab — Newton's summary on screen is rewritten in place to what's true now: done things
      leave its lines, "What happened" picks up the news; with nothing left to offer, the offer goes */
   function syncSummary() {
-    if (!chat || page !== 'dashboard' || planning || showing !== ctxKey()) return;
+    /* the conversation on screen may be one Newton carried here from another page (a plan that ended where its result is):
+       its summary is that page's, so it's rewritten for that page */
+    if (!chat || page !== 'dashboard' || planning || !String(showing).startsWith('dashboard:')) return;
+    const r = showing.split(':')[1];
     const live = chat.messages.filter((m) => m.summary && !m.archived && !m.stream);
     const a = live.filter((m) => /:a:/.test(m.sid)).pop(), b = live.filter((m) => /:b:/.test(m.sid)).pop();
     if (!a && !b) return;
-    const g = greeting(); if (!Array.isArray(g)) return;
+    const g = greeting(r); if (!Array.isArray(g)) return;
     const [happened, next] = [g[0], g[1] || null];
     if (a && happened && a.text !== happened.text) chat.update(a.id, { text: happened.text });
     if (!b) return;
@@ -404,7 +408,7 @@ AG.newton = (() => {
     const t0 = Date.now();
     const tick = () => {
       const m = chat.messages.slice().reverse().find((x) => x.widget && !x.widget.done && (x.widget.card === id
-        || (id === 'halloween' && x.widget.flow === 'idea') || (id.startsWith('start:') && x.widget.flow === 'start')));
+        || (id === 'halloween' && x.widget.flow === 'idea') || (x.widget.flow === 'start' && `start:${x.widget.route}:${x.widget.src}` === id)));   // this start's own form — not another one left open nearby (QA 29.09: it sent the wrong one and waited)
       if (!m) { if (Date.now() - t0 < 5000) setTimeout(tick, 200); return; }
       /* let the options be seen — the recommended one is already picked — then take it */
       setTimeout(() => onAction(m.widget.flow === 'start' ? 'submit' : 'decide', { chat, msg: m, data: m.widget }), pace('look'));
@@ -769,6 +773,11 @@ AG.newton = (() => {
     return true;
   }
   const ALIAS = { 'l-verify': 'verify', 'l-connect': 'connect', 'l-find': 'connect', 'login-gap': 'connect' };
+  /* the other way: the card a task stands for — of the cards that lead to it, the one the game shows now (connect is behind
+     three: purchases can't reach players, the drop at login, login from the game) */
+  const ROUTES_ALL = () => Object.keys(PAGE_CARDS).concat(Object.keys(WAIT || {}));
+  const cardOf = (task) => { const from = Object.keys(ALIAS).filter((c) => ALIAS[c] === task); if (!from.length) return task;
+    const shown = new Set(ROUTES_ALL().flatMap((r) => cards(r).map((c) => c.id))); return from.find((c) => shown.has(c)) || from[0]; };
   /* Add item / bundle / offer and changing an item — in the chat, like everything else (Daria, 27.09: no side panels).
      Newton fills it in from the store (name, price, what's inside), shows the card as players will see it; the dice
      gives another version, every field can be typed over, "Decide for me" adds it as it is. */
@@ -1392,12 +1401,28 @@ AG.newton = (() => {
         const where = k === showing ? '' : whereIs(k);
         /* the card of the page (Daria, 29.09): its kind, the task, one line — what's left or where it waits; the steps go to the ring */
         const sub = isEv && e.built ? 'One click to schedule' : where ? `Waiting on ${where}` : 'Pick up where you left off';
-        out.push(Object.assign({ text: t.text, kind: typeOf(t.taskId), sub, go: k, id: t.id, ev: isEv }, steps || {}));
+        const card = !isEv && cardDef(cardOf(t.taskId)), sig = card && (typeof card.sig === 'function' ? card.sig() : card.sig);
+        out.push(Object.assign({ text: t.text, kind: typeOf(t.taskId), sub, go: k, id: t.id, ev: isEv },
+          card ? { title: card.title, lv: card.lv, sig } : {}, steps || {}));   // the card's own colour, title and number (Daria, 29.09)
       });
     });
-    return out.sort((a, b) => (b.ev - a.ev) || (b.id - a.id));   // the event first, then the newest
+    return out.sort((a, b) => ((a.lv || 3) - (b.lv || 3)) || (b.ev - a.ev) || (b.id - a.id));   // broken (red) always on top (Daria, 29.09), then the event, then the newest
   }
-  function syncWork() { if (!chat) return; fold(); chat.setPins(strips()); }
+  /* a task left open whose problem got solved some other way (Daria, 28.09: day 7 left as a strip after Gold Chest was
+     linked on Items) — there's nothing left to do, so the unfinished question goes, like a cancel; the card is gone already */
+  function dropSolved() {
+    let gone = false;
+    allOpen().forEach((t) => {
+      const c = cardDef(t.taskId);
+      if (!c || ['halloween', 'l-publish'].includes(t.taskId) || !(isDone(t.taskId) || (c.hide && c.hide()))) return;
+      if (t.key === showing) t.ids.forEach((mid) => chat.remove(mid));
+      else if (store.threads[t.key]) store.threads[t.key].messages = store.threads[t.key].messages.filter((m) => !t.ids.includes(m.id));
+      if (actives()[t.key] === t.id) delete actives()[t.key];
+      gone = true;
+    });
+    if (gone) saveStore();
+  }
+  function syncWork() { if (!chat) return; dropSolved(); fold(); chat.setPins(strips()); }
   /* a strip: here — open that task (and put the one you were on away); elsewhere — go to its page, open it there */
   /* a task picked up again moves to the end of the conversation (Daria, 27.09): things happened after it, and the chat
      reads in the order you did things — so it comes back to "now", not to where it was left in the past */

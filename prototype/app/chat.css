@@ -261,8 +261,18 @@
 @media (hover: none) { .cw-log__row > .ag-btn { opacity: 1; } }
 
 /* ---------- pinned: unfinished work, one tap back to it ---------- */
-.chat__top { position: sticky; top: 0; z-index: 2; display: flex; flex-direction: column; gap: 6px; background: transparent; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }   /* glass over the aurora: what scrolls under it blurs away (Daria, 28.09) */
-.chat__top:not(:has(.chat__pin-row, .chat__alert, .chat__alerts .cta)) { display: none; }
+.chat__top { position: sticky; top: 0; z-index: 2; display: flex; flex-direction: column; gap: 6px; padding-bottom: 40px; margin-bottom: -40px;
+  background: var(--color-bg-secondary); background-clip: content-box; }   /* white behind the strips and between them: nothing shows through there */
+/* what scrolls up under the strips fades out (Daria, 29.09, her spec): the panel's white, 40px under the strips, fading
+   to nothing; with no strips, 60px at the chat's top edge once earlier messages have gone up under it. It comes in with
+   the scroll — at rest nothing is under it (without scroll-driven animation it stays off) */
+.chat__top::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40px; z-index: -1; pointer-events: none;
+  background: linear-gradient(to bottom, var(--color-bg-secondary) -3.33%, transparent); opacity: 0; }
+@supports (animation-timeline: scroll()) { .chat__top::after { animation: chat-top-fade linear both; animation-timeline: scroll(nearest block); animation-range: 0 40px; } }
+@keyframes chat-top-fade { from { opacity: 0; } to { opacity: var(--fade, .7); } }   /* under the strips 30% lighter (Daria, 29.09) */
+.chat__top:not(:has(.chat__pin-row, .chat__alert, .chat__alerts .cta)) { display: block; height: 0; padding: 0; margin-bottom: -12px; background: none; }   /* no strips: an empty line at the top — only the fade (−12px: the body's gap) */
+.chat__top:not(:has(.chat__pin-row, .chat__alert, .chat__alerts .cta)) > * { display: none; }
+.chat__top:not(:has(.chat__pin-row, .chat__alert, .chat__alerts .cta))::after { top: 0; bottom: auto; height: 60px; animation-range: 0 60px; --fade: 1; }
 .chat__pin-wrap:empty { display: none; }
 /* pin and alert are built the same (Daria, 26.09): the mark on the first line, a bold line, a grey note under it */
 .chat__card-body { flex: 1; min-width: 0; }
@@ -439,6 +449,9 @@
   transform: translateY(6px); }
 .chat__pin-wrap.is-deck::after { left: 20px; right: 20px; transform: translateY(12px); z-index: 0; opacity: .7; }
 .chat__pin-wrap.is-deck[style*="--under:1"]::after { display: none; }
+/* the edges are the cards under the top one, in their own colours (Daria, 29.09: the whole deck read as one colour) */
+.chat__pin-wrap.is-deck[data-u1="1"]::before, .chat__pin-wrap.is-deck[data-u2="1"]::after { border-color: var(--color-fg-error-secondary); background: var(--color-fg-error-tertiary); }
+.chat__pin-wrap.is-deck[data-u1="2"]::before, .chat__pin-wrap.is-deck[data-u2="2"]::after { border-color: var(--color-fg-warning-secondary); background: var(--color-fg-warning-tertiary); }
 .chat__pin-deck { position: absolute; left: 0; right: 0; bottom: 0; height: 20px; border: 0; background: none; cursor: pointer; display: flex; align-items: flex-end; justify-content: center;
   font: 500 12px/16px var(--font-sans); color: var(--color-text-tertiary); }
 .chat__pin-deck:hover { color: var(--color-text-primary); }

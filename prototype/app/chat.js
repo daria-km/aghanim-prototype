@@ -510,15 +510,17 @@ AG.chat = (() => {
        cancelling a task is Cancel inside it. (onPinClose stays in the engine, nothing calls it now.)
        Built exactly like a problem card (Daria, 29.09: "the same attributes — build them the same"): the kind over the
        title, the title with its arrow, one line (where it waits), the ring with the steps done — the card of the page, blue. */
-    const pinRow = (p, i) => `<div class="chat__pin-row">${ctaCard({ lv: 3, kind: p.kind, title: p.text, sub: p.sub,
-      sig: p.of ? { bar: (p.done / p.of) * 100, v: `${p.done}/${p.of}`, u: 'done' } : null }, `data-chat-pin="${i}"`)}</div>`;
-    /* many unfinished tasks don't pile up (Daria, 28.09): past two they lie in a deck — the first on top, the edges of the
-       others under it, and "N more"; a click fans the deck out, "Show less" folds it back */
+    /* ...and in the card's own colour and words (Daria, 29.09: a broken thing is red on the page — it's red here too, with the
+       same title and number, so you know it at a glance); a task with no card of its own (the event, a form) stays blue */
+    const pinRow = (p, i) => `<div class="chat__pin-row">${ctaCard({ lv: p.lv || 3, kind: p.kind, title: p.title || p.text, sub: p.sub,
+      sig: p.of ? { bar: (p.done / p.of) * 100, v: `${p.done}/${p.of}`, u: 'done' } : p.sig || null }, `data-chat-pin="${i}"`)}</div>`;
+    /* many unfinished tasks don't pile up (Daria, 28.09; 29.09 — from two, like the problems' deck in Hub): past one they lie
+       in a deck — the first on top, the edges of the others under it, and "N more"; a click fans the deck out, "Show less" folds it back */
     const pinHTML = () => {
       const list = o.pins || [];
-      if (list.length <= 2) return `<div class="chat__pin-wrap">${list.map(pinRow).join('')}</div>`;
+      if (list.length <= 1) return `<div class="chat__pin-wrap">${list.map(pinRow).join('')}</div>`;
       if (o.pinsOpen) return `<div class="chat__pin-wrap is-fanned">${list.map(pinRow).join('')}<button class="chat__pin-less" data-chat-pins="close">Show less</button></div>`;
-      return `<div class="chat__pin-wrap is-deck" style="--under:${Math.min(2, list.length - 1)}">${pinRow(list[0], 0)}
+      return `<div class="chat__pin-wrap is-deck" style="--under:${Math.min(2, list.length - 1)}" data-u1="${list[1].lv || 3}" data-u2="${(list[2] || {}).lv || 3}">${pinRow(list[0], 0)}
         <button class="chat__pin-deck" data-chat-pins="open" aria-label="Show all ${list.length} unfinished tasks"><span>${list.length - 1} more unfinished</span></button></div>`;
     };
     /* a question the prototype can't answer yet stays on screen (it's part of the idea), but it only shows a
